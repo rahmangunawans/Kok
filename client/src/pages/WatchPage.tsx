@@ -79,6 +79,7 @@ export default function WatchPage() {
           'fullscreen',
           'overflow_menu'
         ],
+        'overflowMenuButtons': ['language', 'playback_rate', 'captions']
       };
       ui.configure(uiConfig);
 
@@ -97,29 +98,29 @@ export default function WatchPage() {
         
         // Add subtitles to Shaka Player after loading
         if (currentEpisode.subtitles && currentEpisode.subtitles.length > 0) {
-          // Clear existing text tracks if any
           player.setTextTrackVisibility(true);
           
           for (const sub of currentEpisode.subtitles) {
             try {
+              // Convert .srt to .vtt if needed, but for now assuming the URL works or browser handles it
+              // Most HLS players expect VTT. 
               await player.addTextTrackAsync(
                 sub.url,
                 sub.language.toLowerCase(),
                 'subtitles',
-                'text/vtt',
-                null,
-                sub.language === "ID" ? "Indonesian" : "English"
+                'text/vtt'
               );
             } catch (trackError) {
               console.error("Error adding text track", trackError);
             }
           }
           
-          // Select default language
-          const tracks = player.getTextTracks();
-          const idTrack = tracks.find((t: any) => t.language === 'id');
-          if (idTrack) {
-            player.selectTextTrack(idTrack);
+          // Force Shaka to recognize the new tracks
+          const languages = player.getLanguages();
+          if (languages.includes('id')) {
+            player.selectTextLanguage('id');
+          } else if (languages.length > 0) {
+            player.selectTextLanguage(languages[0]);
           }
         }
       } catch (e: any) {
@@ -239,21 +240,21 @@ export default function WatchPage() {
           </Link>
         </div>
 
-        {/* Manual Quality Selection (Since we are using multiple HLS URLs instead of a single manifest) */}
-        <div className="absolute bottom-16 right-4 z-20 flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+        {/* Manual Quality Selection Overlaid on Player */}
+        <div className="absolute top-4 right-4 z-20 flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
           {sources.length > 1 && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button size="sm" variant="ghost" className="text-white hover:bg-white/10 backdrop-blur-sm h-8 px-2 text-xs">
-                  <Settings className="h-3 w-3 mr-1" /> {quality}
+                <Button size="sm" variant="ghost" className="text-white hover:bg-white/10 backdrop-blur-sm h-8 px-3 text-xs font-bold">
+                  <Settings className="h-3 w-3 mr-2" /> {quality.toUpperCase()}
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="bg-[#1a1a1c] border-white/10 text-white">
-                <DropdownMenuLabel>Quality</DropdownMenuLabel>
+                <DropdownMenuLabel>Video Quality</DropdownMenuLabel>
                 <DropdownMenuSeparator className="bg-white/5" />
                 <DropdownMenuRadioGroup value={quality} onValueChange={setQuality}>
                   {sources.map((s: any) => (
-                    <DropdownMenuRadioItem key={s.quality} value={s.quality}>
+                    <DropdownMenuRadioItem key={s.quality} value={s.quality} className="text-xs">
                       {s.quality}
                     </DropdownMenuRadioItem>
                   ))}
