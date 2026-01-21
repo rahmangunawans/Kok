@@ -104,7 +104,7 @@ export default function Home() {
           </div>
           <div className="flex overflow-x-auto pb-4 -mx-4 px-4 gap-3 md:gap-4 scrollbar-hide">
             {allVideos?.slice(0, 14).map((video) => (
-              <div key={video.id} className="min-w-[140px] sm:min-w-[160px] md:min-w-[180px] lg:min-w-[200px]">
+              <div key={video.id} className="min-w-[120px] sm:min-w-[140px] md:min-w-[160px] lg:min-w-[170px]">
                 <VideoCard video={video} onClick={(e) => {
                   if (!user) {
                     e.preventDefault();
@@ -130,7 +130,7 @@ export default function Home() {
                 ?.filter(v => v.categoryId === category.id)
                 .slice(0, 10)
                 .map((video) => (
-                  <div key={video.id} className="min-w-[140px] sm:min-w-[160px] md:min-w-[180px] lg:min-w-[200px]">
+                  <div key={video.id} className="min-w-[120px] sm:min-w-[140px] md:min-w-[160px] lg:min-w-[170px]">
                     <VideoCard video={video} onClick={(e) => {
                       if (!user) {
                         e.preventDefault();
