@@ -1,15 +1,26 @@
-import { useState, useRef, useEffect } from "react";
-import { useParams, Link } from "wouter";
+import { useState, useRef, useEffect, useCallback } from "react";
+import { useParams, Link, useLocation } from "wouter";
 import { useVideo, useEpisode, useEpisodes, useUpdateHistory, useVideos } from "@/hooks/use-videos";
 import ReactPlayer from "react-player";
-import { Loader2, ChevronLeft, ChevronRight, List, Star, Play } from "lucide-react";
+import { Loader2, ChevronLeft, ChevronRight, List, Star, Play, Settings, Subtitles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/use-auth";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+} from "@/components/ui/dropdown-menu";
 
 export default function WatchPage() {
   const { videoId, episodeId } = useParams();
+  const [, setLocation] = useLocation();
   const vId = Number(videoId);
   const eId = Number(episodeId);
 
@@ -21,13 +32,69 @@ export default function WatchPage() {
   const { mutate: updateHistory } = useUpdateHistory();
 
   const [hasWindow, setHasWindow] = useState(false);
+  const [quality, setQuality] = useState("auto");
+  const [showSubtitles, setShowSubtitles] = useState(true);
+  const [currentSubtitle, setCurrentSubtitle] = useState("en");
+  const [playbackRate, setPlaybackRate] = useState(1);
   const playerRef = useRef<ReactPlayer>(null);
 
   useEffect(() => {
     setHasWindow(true);
   }, []);
 
-  // Save progress every 30 seconds
+  // Keyboard Shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+
+      switch (e.key.toLowerCase()) {
+        case " ":
+        case "k":
+          e.preventDefault();
+          // Logic for play/pause would go here if we had state for it
+          break;
+        case "f":
+          e.preventDefault();
+          const playerElement = document.querySelector(".player-wrapper");
+          if (playerElement?.requestFullscreen) {
+            playerElement.requestFullscreen();
+          }
+          break;
+        case "j":
+          playerRef.current?.seekTo(playerRef.current.getCurrentTime() - 10);
+          break;
+        case "l":
+          playerRef.current?.seekTo(playerRef.current.getCurrentTime() + 10);
+          break;
+        case "m":
+          // Mute logic
+          break;
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
+
+  const sortedEpisodes = allEpisodes?.sort((a, b) => a.episodeNumber - b.episodeNumber);
+  const currentIndex = sortedEpisodes?.findIndex(e => e.id === eId) ?? -1;
+  const nextEpisode = currentIndex !== -1 && sortedEpisodes ? sortedEpisodes[currentIndex + 1] : null;
+  const prevEpisode = currentIndex !== -1 && sortedEpisodes ? sortedEpisodes[currentIndex - 1] : null;
+
+  const handleEnded = useCallback(() => {
+    if (user) {
+      updateHistory({
+        userId: user.id,
+        videoId: vId,
+        episodeId: eId,
+        progress: Math.floor(playerRef.current?.getDuration() || 0),
+      });
+    }
+    if (nextEpisode) {
+      setLocation(`/watch/${vId}/${nextEpisode.id}`);
+    }
+  }, [user, vId, eId, nextEpisode, setLocation, updateHistory]);
+
   const handleProgress = ({ playedSeconds }: { playedSeconds: number }) => {
     if (user && playedSeconds > 5 && Math.floor(playedSeconds) % 30 === 0) {
       updateHistory({
@@ -39,11 +106,6 @@ export default function WatchPage() {
     }
   };
 
-  const sortedEpisodes = allEpisodes?.sort((a, b) => a.episodeNumber - b.episodeNumber);
-  const currentIndex = sortedEpisodes?.findIndex(e => e.id === eId) ?? -1;
-  const nextEpisode = currentIndex !== -1 && sortedEpisodes ? sortedEpisodes[currentIndex + 1] : null;
-  const prevEpisode = currentIndex !== -1 && sortedEpisodes ? sortedEpisodes[currentIndex - 1] : null;
-
   if (loadingEpisode || !hasWindow) {
     return (
       <div className="h-screen w-full bg-black flex items-center justify-center">
@@ -54,11 +116,26 @@ export default function WatchPage() {
 
   if (!currentEpisode) return <div>Episode not found</div>;
 
+  // Multi-quality sources from user or episode data
+  const sources = currentEpisode.sources?.length > 0 ? currentEpisode.sources : [
+    { quality: "1080p", url: "https://cffaws.wetvinfo.com/svp_50217/01A41C6E77267B867049C1CEF4CE75F3A4E8E3260A7C9606FEACD7AD4380CC8751748AD2CF7976008675923AD906CB8A93A899B27C00CEC4F5EFE045CAFA5B0C37FE8BC1EA0D922B0198837D7FDD05E3199F82E56F742DB68A7DE7CF4F30FB0DA543BC8370384AE0EB49E7F7DB59F289224A354EB1924168079C4DC9C7868A1E5C/gzc_1000207_0bcarqayaaabduahwedlpbusrdgeqcfadbka.f321004.ts.m3u8?ver=4" },
+    { quality: "720p", url: "https://cffaws.wetvinfo.com/svp_50217/01A41C6E77267B867049C1CEF4CE75F3A4E8E3260A7C9606FEACD7AD4380CC8751748AD2CF7976008675923AD906CB8A93A899B27C00CEC4F5EFE045CAFA5B0C37FE8BC1EA0D922B0198837D7FDD05E319785C3439C43A29772548A7B3026F8D7AD8DD8070BF78AFA08529A75A812DCAD9F5A433034712F7D53CF3DD7DD1D40192/gzc_1000207_0bcarqayaaabduahwedlpbusrdgeqcfadbka.f321003.ts.m3u8?ver=4" },
+    { quality: "480p", url: "https://cffaws.wetvinfo.com/svp_50217/01A41C6E77267B867049C1CEF4CE75F3A4E8E3260A7C9606FEACD7AD4380CC8751748AD2CF7976008675923AD906CB8A93A899B27C00CEC4F5EFE045CAFA5B0C37FE8BC1EA0D922B0198837D7FDD05E319D680F5EA28868AEC38886863FF1780034EE38E59AAB7C8C2797A94A5ABBDB7EBE8B8467AD3C3C2FFB6EDCA34C24A02B6/gzc_1000207_0bcarqayaaabduahwedlpbusrdgeqcfadbka.f321002.ts.m3u8?ver=4" },
+    { quality: "360p", url: "https://cffaws.wetvinfo.com/svp_50217/01A41C6E77267B867049C1CEF4CE75F3A4E8E3260A7C9606FEACD7AD4380CC8751748AD2CF7976008675923AD906CB8A93A899B27C00CEC4F5EFE045CAFA5B0C37FE8BC1EA0D922B0198837D7FDD05E319745A66387729CBF890B1654417968F92734ECAF82C36F26779C564B772780E44AD614DB7AF9B6772305148B0A7AB4E90/gzc_1000207_0bcarqayaaabduahwedlpbusrdgeqcfadbka.f321001.ts.m3u8?ver=4" }
+  ];
+
+  const videoUrl = sources.find(s => s.quality === quality)?.url || sources[0].url;
+
+  const subtitleTracks = [
+    { language: "en", label: "English", url: "https://cffaws.wetvinfo.com/svp_50217/gzc_1000207_0bcarqayaaabduahwedlpbusrdgeqcfadbka.f51503000.srt?vkey=014369C6A3F0F4949080A872CBB309B9306BA188B1CC9ADAEC76699E03732DC0E301269218FBAFD4E368025E146EACB43B18180559F0BB93AD4C2B0C88498A7377A90234FD2D15BFD22A02436F2309D2611D9F742AFD930385F07B6F67AD249FDEB011E97784EFB7B987AC1FC501C59FE844E419001312133EEDE2821C1E2CF348" },
+    { language: "id", label: "Indonesian", url: "https://cffaws.wetvinfo.com/svp_50217/gzc_1000207_0bcarqayaaabduahwedlpbusrdgeqcfadbka.f51508000.srt?vkey=014369C6A3F0F4949080A872CBB309B9306BA188B1CC9ADAEC76699E03732DC0E301269218FBAFD4E368025E146EACB43B18180559F0BB93AD4C2B0C88498A7377A90234FD2D15BFD22A02436F2309D26130060E794C0C79308E9E3CB0F79019FDB98B1274B9349917111073E02ED71175D0168772C8D63E17D06D7D19FAF2EBDB" }
+  ];
+
   return (
     <div className="min-h-screen bg-black flex flex-col">
       {/* Player Container */}
-      <div className="relative w-full aspect-video md:h-[calc(100vh-200px)] bg-black shadow-2xl z-10">
-        <div className="absolute top-4 left-4 z-20">
+      <div className="relative w-full aspect-video md:h-[calc(100vh-200px)] bg-black shadow-2xl z-10 player-wrapper group">
+        <div className="absolute top-4 left-4 z-20 opacity-0 group-hover:opacity-100 transition-opacity">
           <Link href={`/video/${vId}`}>
             <Button variant="ghost" className="text-white hover:bg-white/10 backdrop-blur-sm">
               <ChevronLeft className="mr-2 h-4 w-4" />
@@ -67,38 +144,80 @@ export default function WatchPage() {
           </Link>
         </div>
 
+        {/* Custom Player Controls Overlays */}
+        <div className="absolute bottom-12 right-4 z-20 flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+          {/* Subtitle Toggle */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button size="icon" variant="ghost" className="text-white hover:bg-white/10 backdrop-blur-sm">
+                <Subtitles className="h-5 w-5" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="bg-[#1a1a1c] border-white/10 text-white">
+              <DropdownMenuLabel>Subtitles</DropdownMenuLabel>
+              <DropdownMenuSeparator className="bg-white/5" />
+              <DropdownMenuRadioGroup value={showSubtitles ? currentSubtitle : "off"} onValueChange={(v) => {
+                if (v === "off") setShowSubtitles(false);
+                else {
+                  setShowSubtitles(true);
+                  setCurrentSubtitle(v);
+                }
+              }}>
+                <DropdownMenuRadioItem value="off">Off</DropdownMenuRadioItem>
+                {subtitleTracks.map(sub => (
+                  <DropdownMenuRadioItem key={sub.language} value={sub.language}>
+                    {sub.label}
+                  </DropdownMenuRadioItem>
+                ))}
+              </DropdownMenuRadioGroup>
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          {/* Quality Selection */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button size="icon" variant="ghost" className="text-white hover:bg-white/10 backdrop-blur-sm">
+                <Settings className="h-5 w-5" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="bg-[#1a1a1c] border-white/10 text-white">
+              <DropdownMenuLabel>Quality</DropdownMenuLabel>
+              <DropdownMenuSeparator className="bg-white/5" />
+              <DropdownMenuRadioGroup value={quality} onValueChange={setQuality}>
+                {sources.map(s => (
+                  <DropdownMenuRadioItem key={s.quality} value={s.quality}>
+                    {s.quality}
+                  </DropdownMenuRadioItem>
+                ))}
+              </DropdownMenuRadioGroup>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+
         <ReactPlayer
           ref={playerRef}
-          url={currentEpisode.sourceUrl}
+          url={videoUrl}
           width="100%"
           height="100%"
           controls={true}
           playing={true}
+          playbackRate={playbackRate}
           config={{
             file: {
               attributes: {
                 crossOrigin: "anonymous", 
               },
-              tracks: currentEpisode.subtitles?.map(sub => ({
+              tracks: showSubtitles ? subtitleTracks.map(sub => ({
                 kind: 'subtitles',
                 src: sub.url,
                 srcLang: sub.language,
-                label: sub.language.toUpperCase(),
-                default: sub.language === 'en'
-              }))
+                label: sub.label,
+                default: sub.language === currentSubtitle
+              })) : []
             }
           }}
           onProgress={handleProgress}
-          onEnded={() => {
-            if (user) {
-              updateHistory({
-                userId: user.id,
-                videoId: vId,
-                episodeId: eId,
-                progress: Math.floor(playerRef.current?.getDuration() || 0),
-              });
-            }
-          }}
+          onEnded={handleEnded}
           style={{ backgroundColor: "black" }}
         />
       </div>
@@ -117,14 +236,14 @@ export default function WatchPage() {
               <Button 
                 variant="outline" 
                 disabled={!prevEpisode}
-                onClick={() => prevEpisode && (window.location.href = `/watch/${vId}/${prevEpisode.id}`)}
+                onClick={() => prevEpisode && setLocation(`/watch/${vId}/${prevEpisode.id}`)}
               >
                 <ChevronLeft className="mr-2 h-4 w-4" /> Previous
               </Button>
               <Button 
                 variant="default"
                 disabled={!nextEpisode}
-                onClick={() => nextEpisode && (window.location.href = `/watch/${vId}/${nextEpisode.id}`)}
+                onClick={() => nextEpisode && setLocation(`/watch/${vId}/${nextEpisode.id}`)}
               >
                 Next Episode <ChevronRight className="ml-2 h-4 w-4" />
               </Button>
