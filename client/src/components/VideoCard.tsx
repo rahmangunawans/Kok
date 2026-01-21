@@ -7,11 +7,23 @@ interface VideoCardProps {
   video: Video;
   className?: string;
   showRating?: boolean;
+  onClick?: () => void;
 }
 
-export function VideoCard({ video, className, showRating = true }: VideoCardProps) {
+export function VideoCard({ video, className, showRating = true, onClick }: VideoCardProps) {
+  const handleClick = (e: React.MouseEvent) => {
+    if (onClick) {
+      e.preventDefault();
+      onClick();
+    }
+  };
+
   return (
-    <Link href={`/video/${video.id}`} className={cn("group block w-full space-y-3 cursor-pointer", className)}>
+    <Link 
+      href={`/video/${video.id}`} 
+      className={cn("group block w-full space-y-3 cursor-pointer", className)}
+      onClick={handleClick}
+    >
       <div className="relative aspect-[2/3] overflow-hidden rounded-xl bg-muted/20 shadow-lg border border-white/5 transition-transform duration-300 group-hover:scale-[1.02]">
         {/* Poster Image */}
         <img 
