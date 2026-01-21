@@ -93,8 +93,11 @@ export default function WatchPage() {
           ? currentEpisode.sources 
           : [];
         
-        const videoUrl = sources.find((s: any) => s.quality === quality)?.url || sources[0]?.url || currentEpisode.sourceUrl;
+        const selectedSource = sources.find((s: any) => s.quality === quality) || sources[0];
+        const videoUrl = selectedSource?.url || currentEpisode.sourceUrl;
 
+        // Reset player before loading new source to avoid state issues
+        await player.unload();
         await player.load(videoUrl);
         
         // Add subtitles to Shaka Player after loading
@@ -103,14 +106,12 @@ export default function WatchPage() {
           
           for (const sub of currentEpisode.subtitles) {
             try {
-              // Note: Shaka Player might need a text parser for SRT.
-              // We'll try to add it as 'application/x-subrip' or let Shaka guess.
-              // However, VTT is most reliable.
+              // Note: Shaka Player handles SRT via application/x-subrip
               await player.addTextTrackAsync(
                 sub.url,
                 sub.language.toLowerCase(),
                 'subtitles',
-                sub.url.endsWith('.srt') ? 'application/x-subrip' : 'text/vtt',
+                'application/x-subrip',
                 null,
                 sub.language === "ID" ? "Indonesian" : "English"
               );
@@ -119,7 +120,7 @@ export default function WatchPage() {
             }
           }
           
-          // Force select language
+          // Selection must happen after tracks are added
           const languages = player.getTextLanguages();
           if (languages.includes('id')) {
             player.selectTextLanguage('id');
