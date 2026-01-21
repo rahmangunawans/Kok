@@ -214,6 +214,11 @@ export default function WatchPage() {
     }
   }, [currentEpisode, loadingEpisode, vId, eId, setLocation]);
 
+  const sortedEpisodes = allEpisodes?.sort((a, b) => a.episodeNumber - b.episodeNumber);
+  const currentIndex = sortedEpisodes?.findIndex(e => e.id === eId) ?? -1;
+  const nextEpisode = currentIndex !== -1 && sortedEpisodes ? sortedEpisodes[currentIndex + 1] : null;
+  const prevEpisode = currentIndex !== -1 && sortedEpisodes ? sortedEpisodes[currentIndex - 1] : null;
+
   // Keyboard Shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
