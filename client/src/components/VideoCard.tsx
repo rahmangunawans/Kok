@@ -20,10 +20,10 @@ export function VideoCard({ video, className, showRating = true, onClick }: Vide
   return (
     <Link 
       href={`/video/${video.id}`} 
-      className={cn("group block w-full space-y-1.5 cursor-pointer", className)}
+      className={cn("group block w-full space-y-3 cursor-pointer", className)}
       onClick={handleClick}
     >
-      <div className="relative aspect-[2/3] overflow-hidden rounded-lg bg-muted/20 shadow-md border border-white/5 transition-transform duration-300 group-hover:scale-[1.02]">
+      <div className="relative aspect-[2/3] overflow-hidden rounded-xl bg-muted/20 shadow-lg border border-white/5 transition-transform duration-300 group-hover:scale-[1.02]">
         {/* Poster Image */}
         <img 
           src={video.posterUrl} 
@@ -37,8 +37,8 @@ export function VideoCard({ video, className, showRating = true, onClick }: Vide
 
         {/* Hover Play Button */}
         <div className="absolute inset-0 flex items-center justify-center opacity-0 transition-opacity duration-300 group-hover:opacity-100">
-          <div className="rounded-full bg-primary/90 p-2 text-primary-foreground shadow-lg backdrop-blur-sm transform scale-75 group-hover:scale-100 transition-transform">
-            <PlayCircle className="w-5 h-5 fill-current" />
+          <div className="rounded-full bg-primary/90 p-3 text-primary-foreground shadow-xl backdrop-blur-sm transform scale-75 group-hover:scale-100 transition-transform">
+            <PlayCircle className="w-8 h-8 fill-current" />
           </div>
         </div>
 
@@ -65,11 +65,11 @@ export function VideoCard({ video, className, showRating = true, onClick }: Vide
         )}
       </div>
 
-      <div className="space-y-0">
-        <h3 className="line-clamp-1 font-medium text-[10px] md:text-[11px] leading-tight group-hover:text-primary transition-colors">
+      <div className="space-y-0.5">
+        <h3 className="line-clamp-1 font-medium text-sm leading-tight group-hover:text-primary transition-colors">
           {video.title}
         </h3>
-        <div className="flex items-center justify-between text-[8px] text-muted-foreground">
+        <div className="flex items-center justify-between text-[10px] text-muted-foreground">
           <span className="flex items-center gap-1">
             <Calendar className="w-3 h-3" />
             {video.year || "N/A"}

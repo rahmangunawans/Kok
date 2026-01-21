@@ -95,49 +95,45 @@ export default function Home() {
       <div className="max-w-[1400px] mx-auto px-4 space-y-12">
         
         {/* Latest Videos */}
-        <section className="space-y-2">
+        <section className="space-y-4">
           <div className="flex items-center justify-between">
-            <h2 className="text-base md:text-lg font-display font-bold">Latest Updates</h2>
-            <Link href="/category/all" className="text-[10px] font-medium text-primary hover:underline">
+            <h2 className="text-xl md:text-2xl font-display font-bold">Latest Updates</h2>
+            <Link href="/category/all" className="text-sm font-medium text-primary hover:underline">
               View All
             </Link>
           </div>
-          <div className="flex overflow-x-auto pb-2 -mx-4 px-4 gap-2 scrollbar-hide">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-7 gap-3 md:gap-4">
             {allVideos?.slice(0, 14).map((video) => (
-              <div key={video.id} className="min-w-[85px] sm:min-w-[100px] md:min-w-[120px] lg:min-w-[130px] xl:min-w-[140px]">
-                <VideoCard video={video} onClick={(e) => {
-                  if (!user) {
-                    e.preventDefault();
-                    setShowAuthModal(true);
-                  }
-                }} />
-              </div>
+              <VideoCard key={video.id} video={video} onClick={(e) => {
+                if (!user) {
+                  e.preventDefault();
+                  setShowAuthModal(true);
+                }
+              }} />
             ))}
           </div>
         </section>
 
         {/* Categories Preview */}
         {categories?.slice(0, 3).map((category) => (
-          <section key={category.id} className="space-y-2">
+          <section key={category.id} className="space-y-4">
             <div className="flex items-center justify-between">
-              <h2 className="text-base md:text-lg font-display font-bold">{category.name}</h2>
-              <Link href={`/category/${category.slug}`} className="text-[10px] font-medium text-primary hover:underline">
+              <h2 className="text-xl md:text-2xl font-display font-bold">{category.name}</h2>
+              <Link href={`/category/${category.slug}`} className="text-sm font-medium text-primary hover:underline">
                 View All
               </Link>
             </div>
-            <div className="flex overflow-x-auto pb-2 -mx-4 px-4 gap-2 scrollbar-hide">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-7 gap-3 md:gap-4">
               {allVideos
                 ?.filter(v => v.categoryId === category.id)
-                .slice(0, 14)
+                .slice(0, 7)
                 .map((video) => (
-                  <div key={video.id} className="min-w-[85px] sm:min-w-[100px] md:min-w-[120px] lg:min-w-[130px] xl:min-w-[140px]">
-                    <VideoCard video={video} onClick={(e) => {
-                      if (!user) {
-                        e.preventDefault();
-                        setShowAuthModal(true);
-                      }
-                    }} />
-                  </div>
+                  <VideoCard key={video.id} video={video} onClick={(e) => {
+                    if (!user) {
+                      e.preventDefault();
+                      setShowAuthModal(true);
+                    }
+                  }} />
                 ))}
             </div>
           </section>
