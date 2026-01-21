@@ -99,7 +99,12 @@ export async function registerRoutes(
   app.get(api.episodes.get.path, async (req, res) => {
     const episode = await storage.getEpisode(Number(req.params.id));
     if (!episode) return res.status(404).json({ message: "Episode not found" });
-    res.json({ ...episode, sources: [], subtitles: [] });
+    
+    // Fetch sources and subtitles
+    const sources = await db.select().from(videoSources).where(eq(videoSources.episodeId, episode.id));
+    const subs = await db.select().from(subtitles).where(eq(subtitles.episodeId, episode.id));
+    
+    res.json({ ...episode, sources, subtitles: subs });
   });
 
   // === Categories ===
