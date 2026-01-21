@@ -327,45 +327,49 @@ export function Navbar() {
             </DialogHeader>
           </div>
 
-          <div className="flex-1 overflow-y-auto p-4 space-y-3.5 no-scrollbar min-h-[280px]">
-            <div className="grid grid-cols-2 gap-3 pb-1">
-              {vipPlans.map((plan) => (
-                <div 
-                  key={plan.id}
-                  onClick={() => setSelectedPlan(plan)}
-                  className={`relative p-3 rounded-xl border transition-all cursor-pointer flex flex-col justify-between ${selectedPlan.id === plan.id ? 'border-[#d0992e] bg-[#d0992e]/10 shadow-[0_0_15px_rgba(208,153,46,0.05)]' : 'border-white/5 bg-white/5 hover:border-white/10'}`}
-                >
-                  <div className="space-y-1">
-                    <div className="flex justify-between items-start">
-                      <span className="font-bold text-white text-[10px] leading-tight line-clamp-1">{plan.name.replace(' Subscription', '')}</span>
+          <div className="flex-1 overflow-hidden flex flex-col min-h-[220px]">
+            <div className="flex-1 overflow-x-auto no-scrollbar py-4 px-5">
+              <div className="flex gap-3 min-w-max pb-2">
+                {vipPlans.map((plan) => (
+                  <div 
+                    key={plan.id}
+                    onClick={() => setSelectedPlan(plan)}
+                    className={`relative w-[140px] p-4 rounded-xl border transition-all cursor-pointer flex flex-col justify-between shrink-0 ${selectedPlan.id === plan.id ? 'border-[#d0992e] bg-[#d0992e]/10 shadow-[0_0_15px_rgba(208,153,46,0.05)]' : 'border-white/5 bg-white/5 hover:border-white/10'}`}
+                  >
+                    <div className="space-y-1.5">
+                      <div className="flex justify-between items-start">
+                        <span className="font-bold text-white text-[11px] leading-tight line-clamp-1">{plan.name.replace(' Subscription', '')}</span>
+                      </div>
+                      {plan.discount && (
+                        <Badge className="bg-[#d0992e] text-black text-[8px] font-black border-0 rounded-md px-1.5 py-0 w-fit">
+                          {plan.discount}
+                        </Badge>
+                      )}
                     </div>
-                    {plan.discount && (
-                      <Badge className="bg-[#d0992e] text-black text-[7px] font-black border-0 rounded-md px-1 py-0 w-fit">
-                        {plan.discount}
-                      </Badge>
-                    )}
-                  </div>
-                  <div className="mt-2">
-                    <div className="flex flex-col">
-                      <span className="text-base font-black text-[#d0992e] leading-none">{plan.price.replace('Rp', 'Rp ')}</span>
-                      <span className="text-[9px] text-gray-500 line-through mt-0.5">{plan.originalPrice}</span>
-                    </div>
-                  </div>
-                  {selectedPlan.id === plan.id && (
-                    <div className="absolute right-2 top-2">
-                      <div className="w-3 h-3 rounded-full bg-[#d0992e] flex items-center justify-center">
-                        <Check className="w-2 h-2 text-black stroke-[4]" />
+                    <div className="mt-4">
+                      <div className="flex flex-col">
+                        <span className="text-lg font-black text-[#d0992e] leading-none">{plan.price.replace('Rp', 'Rp ')}</span>
+                        <span className="text-[10px] text-gray-500 line-through mt-1">{plan.originalPrice}</span>
                       </div>
                     </div>
-                  )}
-                </div>
-              ))}
+                    {selectedPlan.id === plan.id && (
+                      <div className="absolute right-3 top-3">
+                        <div className="w-4 h-4 rounded-full bg-[#d0992e] flex items-center justify-center">
+                          <Check className="w-2.5 h-2.5 text-black stroke-[4]" />
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
             </div>
 
-            <div className="p-2.5 rounded-xl bg-[#d0992e]/10 border border-[#d0992e]/20">
-              <p className="text-[9px] font-bold text-[#d0992e] text-center">
-                New subscribers get 60% off the first term!
-              </p>
+            <div className="px-5 pb-4">
+              <div className="p-2.5 rounded-xl bg-[#d0992e]/10 border border-[#d0992e]/20">
+                <p className="text-[10px] font-bold text-[#d0992e] text-center">
+                  New subscribers get 60% off the first term!
+                </p>
+              </div>
             </div>
           </div>
 
