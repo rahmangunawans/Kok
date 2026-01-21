@@ -152,13 +152,28 @@ export const watchlistRelations = relations(watchlist, ({ one }) => ({
 // === INSERTS & TYPES ===
 
 export const insertUserSchema = createInsertSchema(users).omit({ id: true, createdAt: true });
+export type InsertUser = z.infer<typeof insertUserSchema>;
+
 export const insertCategorySchema = createInsertSchema(categories).omit({ id: true });
+export type InsertCategory = z.infer<typeof insertCategorySchema>;
+
 export const insertVideoSchema = createInsertSchema(videos).omit({ id: true, createdAt: true, views: true });
+export type InsertVideo = z.infer<typeof insertVideoSchema>;
+
 export const insertEpisodeSchema = createInsertSchema(episodes).omit({ id: true, createdAt: true });
+export type InsertEpisode = z.infer<typeof insertEpisodeSchema>;
+
 export const insertVideoSourceSchema = createInsertSchema(videoSources).omit({ id: true });
+export type InsertVideoSource = z.infer<typeof insertVideoSourceSchema>;
+
 export const insertSubtitleSchema = createInsertSchema(subtitles).omit({ id: true });
+export type InsertSubtitle = z.infer<typeof insertSubtitleSchema>;
+
 export const insertWatchHistorySchema = createInsertSchema(watchHistory).omit({ id: true, lastWatched: true });
+export type InsertWatchHistory = z.infer<typeof insertWatchHistorySchema>;
+
 export const insertWatchlistSchema = createInsertSchema(watchlist).omit({ id: true, addedAt: true });
+export type InsertWatchlist = z.infer<typeof insertWatchlistSchema>;
 
 export type User = typeof users.$inferSelect;
 export type Category = typeof categories.$inferSelect;
