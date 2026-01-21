@@ -103,21 +103,13 @@ export default function WatchPage() {
         const sources = currentEpisode.sources && currentEpisode.sources.length > 0 
           ? currentEpisode.sources 
           : [];
-        
-        const selectedSource = sources.find((s: any) => s.quality === quality) || sources[0];
-        const videoUrl = selectedSource?.url || currentEpisode.sourceUrl;
-
-        if (!videoUrl) {
-          console.error("No video URL found");
-          return;
-        }
 
         // Reset player before loading new source
         await player.unload();
 
         // Detect if it's MP4 or HLS
-        const isMp4 = videoUrl.toLowerCase().includes('.mp4');
-        const isHls = videoUrl.toLowerCase().includes('.m3u8');
+        const firstUrl = sources[0]?.url || currentEpisode.sourceUrl;
+        const isHls = firstUrl?.toLowerCase().includes('.m3u8');
         
         player.configure({
           manifest: {
@@ -135,13 +127,28 @@ export default function WatchPage() {
             rebufferingGoal: 10,
             bufferBehind: 30,
             alwaysStreamText: true,
+          },
+          abr: {
+            enabled: true // Enable adaptive bitrate by default
           }
         });
 
-        // Load the video.
-        if (isMp4) {
-          await player.load(videoUrl, null, 'video/mp4');
-        } else if (isHls) {
+        // If we have multiple sources but they are separate HLS manifests (not a master manifest),
+        // Shaka works best if we load them as variants or just load the master.
+        // For your data, these look like separate manifests.
+        // To show multiple qualities in the menu for separate manifests, we should ideally have a master manifest.
+        // Since we have separate URLs, we'll load the one matching 'quality' state if it's set, 
+        // but we'll try to let Shaka manage it if possible.
+        
+        const selectedSource = sources.find((s: any) => s.quality === quality) || sources[0];
+        const videoUrl = selectedSource?.url || currentEpisode.sourceUrl;
+
+        if (!videoUrl) {
+          console.error("No video URL found");
+          return;
+        }
+
+        if (isHls) {
           await player.load(videoUrl, null, 'application/x-mpegurl');
         } else {
           await player.load(videoUrl);
