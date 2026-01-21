@@ -209,6 +209,13 @@ export default function WatchPage() {
   const nextEpisode = currentIndex !== -1 && sortedEpisodes ? sortedEpisodes[currentIndex + 1] : null;
   const prevEpisode = currentIndex !== -1 && sortedEpisodes ? sortedEpisodes[currentIndex - 1] : null;
 
+  // Manual redirect for old IDs if necessary, or just inform user
+  useEffect(() => {
+    if (loadingEpisode === false && !currentEpisode && vId === 4 && eId === 1) {
+      setLocation("/watch/8/2");
+    }
+  }, [currentEpisode, loadingEpisode, vId, eId, setLocation]);
+
   // Keyboard Shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
