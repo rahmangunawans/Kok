@@ -21,7 +21,7 @@ export function HeroCarousel({ videos }: HeroCarouselProps) {
         {videos.map((video) => (
           <div key={video.id} className="relative flex-[0_0_100%] min-w-0">
             {/* Aspect ratio container: 16:9 on mobile, 21:9 on desktop */}
-            <div className="relative w-full aspect-[4/5] sm:aspect-[16/9] lg:aspect-[21/9]">
+            <div className="relative w-full aspect-[4/5] sm:aspect-[16/9] lg:aspect-[21/9] xl:aspect-[24/9] max-h-[70vh]">
               <img
                 src={video.bannerUrl || video.posterUrl}
                 alt={video.title}
