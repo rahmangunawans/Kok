@@ -85,12 +85,13 @@ export default function WatchPage() {
           'spacer',
           'mute',
           'volume',
+          'quality',
           'captions',
           'playback_rate',
           'fullscreen',
           'overflow_menu'
         ],
-        'overflowMenuButtons': ['language', 'playback_rate', 'captions'],
+        'overflowMenuButtons': ['language', 'playback_rate', 'captions', 'quality'],
       };
       ui.configure(uiConfig);
 
@@ -327,29 +328,7 @@ export default function WatchPage() {
           </Link>
         </div>
 
-        {/* Manual Quality Selection Overlaid on Player */}
-        <div className="absolute top-4 right-4 z-20 flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-          {sources.length > 1 && (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button size="sm" variant="ghost" className="text-white hover:bg-white/10 backdrop-blur-sm h-8 px-3 text-xs font-bold">
-                  <Settings className="h-3 w-3 mr-2" /> {quality.toUpperCase()}
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="bg-[#1a1a1c] border-white/10 text-white">
-                <DropdownMenuLabel>Video Quality</DropdownMenuLabel>
-                <DropdownMenuSeparator className="bg-white/5" />
-                <DropdownMenuRadioGroup value={quality} onValueChange={setQuality}>
-                  {sources.map((s: any) => (
-                    <DropdownMenuRadioItem key={s.quality} value={s.quality} className="text-xs">
-                      {s.quality}
-                    </DropdownMenuRadioItem>
-                  ))}
-                </DropdownMenuRadioGroup>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          )}
-        </div>
+        {/* Remove custom quality selection, using Shaka UI built-in instead */}
 
         {/* Remove manually implemented controls to avoid duplication with Shaka UI */}
         <video
