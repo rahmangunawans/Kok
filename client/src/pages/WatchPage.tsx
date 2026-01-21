@@ -21,11 +21,11 @@ import {
 export default function WatchPage() {
   const { videoId, episodeId } = useParams();
   const [, setLocation] = useLocation();
-  const vId = videoId ? Number(videoId) : NaN;
-  const eId = episodeId ? Number(episodeId) : NaN;
+  const vId = videoId && !isNaN(Number(videoId)) ? Number(videoId) : 0;
+  const eId = episodeId && !isNaN(Number(episodeId)) ? Number(episodeId) : 0;
 
-  const { data: video } = useVideo(vId);
-  const { data: currentEpisode, isLoading: loadingEpisode } = useEpisode(eId);
+  const { data: video, isLoading: loadingVideo } = useVideo(vId);
+  const { data: currentEpisode, isLoading: loadingEpisode, error: episodeError } = useEpisode(eId);
   const { data: allEpisodes } = useEpisodes(vId);
   const { data: relatedVideos } = useVideos({ category: video?.categoryId?.toString() });
   const { user } = useAuth();
@@ -287,15 +287,27 @@ export default function WatchPage() {
     }
   }, [user, vId, eId, nextEpisode, setLocation, updateHistory]);
 
-  if (loadingEpisode || !hasWindow) {
+  if (loadingEpisode || loadingVideo || !hasWindow) {
     return (
       <div className="h-screen w-full bg-black flex items-center justify-center">
-        <Loader2 className="w-12 h-12 animate-spin text-primary" />
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="w-12 h-12 animate-spin text-primary" />
+          <p className="text-white/50 text-sm animate-pulse">Loading video player...</p>
+        </div>
       </div>
     );
   }
 
-  if (!currentEpisode) return <div>Episode not found</div>;
+  if (episodeError || !currentEpisode) {
+    return (
+      <div className="h-screen w-full bg-black flex flex-col items-center justify-center gap-4">
+        <p className="text-white/70">Episode not found or failed to load</p>
+        <Link href="/">
+          <Button variant="outline">Back to Home</Button>
+        </Link>
+      </div>
+    );
+  }
 
   const sourcesData = currentEpisode.sources && currentEpisode.sources.length > 0 
     ? currentEpisode.sources 
