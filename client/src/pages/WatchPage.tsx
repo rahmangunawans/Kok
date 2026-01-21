@@ -79,7 +79,8 @@ export default function WatchPage() {
           'fullscreen',
           'overflow_menu'
         ],
-        'overflowMenuButtons': ['language', 'playback_rate', 'captions']
+        'overflowMenuButtons': ['language', 'playback_rate', 'captions'],
+        'addQualityControls': false,
       };
       ui.configure(uiConfig);
 
@@ -99,7 +100,9 @@ export default function WatchPage() {
         await player.unload();
 
         if (videoRef.current) {
-          // Shaka Player v4+ HLS Configuration
+          // Detect if it's MP4 or HLS
+          const isMp4 = videoUrl.toLowerCase().includes('.mp4');
+          
           player.configure({
             manifest: {
               retryParameters: {
@@ -119,8 +122,12 @@ export default function WatchPage() {
             }
           });
 
-          // Load the video. Shaka auto-detects HLS from .m3u8 extension or content
-          await player.load(videoUrl);
+          // Load the video. Force mime type for HLS if needed
+          if (isMp4) {
+            await player.load(videoUrl, null, 'video/mp4');
+          } else {
+            await player.load(videoUrl, null, 'application/x-mpegurl');
+          }
           
           // Subtitles handling
           if (currentEpisode.subtitles && currentEpisode.subtitles.length > 0) {
@@ -129,7 +136,6 @@ export default function WatchPage() {
             for (const sub of currentEpisode.subtitles) {
               try {
                 // SRT needs application/x-subrip
-                // WebVTT is preferred but we use what we have
                 await player.addTextTrackAsync(
                   sub.url,
                   sub.language.toLowerCase(),
@@ -165,7 +171,6 @@ export default function WatchPage() {
         }
       } catch (e: any) {
         console.error("Critical Shaka Load Error", e);
-        // Direct HTML5 Fallback if Shaka fails
         if (videoRef.current) {
           const selectedSource = (currentEpisode.sources || []).find((s: any) => s.quality === quality) || (currentEpisode.sources || [])[0];
           videoRef.current.src = selectedSource?.url || currentEpisode.sourceUrl;
