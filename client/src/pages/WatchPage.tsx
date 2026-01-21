@@ -21,8 +21,8 @@ import {
 export default function WatchPage() {
   const { videoId, episodeId } = useParams();
   const [, setLocation] = useLocation();
-  const vId = Number(videoId);
-  const eId = Number(episodeId);
+  const vId = videoId ? Number(videoId) : NaN;
+  const eId = episodeId ? Number(episodeId) : NaN;
 
   const { data: video } = useVideo(vId);
   const { data: currentEpisode, isLoading: loadingEpisode } = useEpisode(eId);
@@ -105,11 +105,12 @@ export default function WatchPage() {
     if (!shakaPlayerRef.current || !currentEpisode || quality === "auto") return;
     
     const switchSource = async () => {
+      if (!currentEpisode) return;
       const sources = currentEpisode.sources || [];
       const selectedSource = sources.find((s: any) => s.quality === quality);
       const videoUrl = selectedSource?.url;
       
-      if (videoUrl) {
+      if (videoUrl && shakaPlayerRef.current) {
         try {
           const currentTime = videoRef.current?.currentTime || 0;
           const isPaused = videoRef.current?.paused;
@@ -165,51 +166,60 @@ export default function WatchPage() {
     if (!currentEpisode || !videoRef.current || !videoContainerRef.current) return;
 
     const initPlayer = async () => {
-      if (!videoRef.current || !videoContainerRef.current) return;
-
-      // @ts-ignore
-      shaka.polyfill.installAll();
-      // @ts-ignore
-      if (!shaka.Player.isBrowserSupported()) {
-        console.error("Browser not supported!");
-        return;
-      }
-
-      // @ts-ignore
-      const player = new shaka.Player();
-      await player.attach(videoRef.current);
-      playerRef.current = player;
-      shakaPlayerRef.current = player;
-
-      player.addEventListener('timeupdate', () => {
-        if (videoRef.current) {
-          handleProgress();
-        }
-      });
-
-      // @ts-ignore
-      const ui = new shaka.ui.Overlay(
-        player,
-        videoContainerRef.current,
-        videoRef.current
-      );
-
-      const uiConfig = {
-        'controlPanelElements': [
-          'play_pause', 'time_and_duration', 'spacer', 'mute', 'volume', 
-          'quality', 'captions', 'playback_rate', 'fullscreen', 'overflow_menu'
-        ],
-        'overflowMenuButtons': ['language', 'playback_rate', 'captions', 'quality'],
-      };
-      ui.configure(uiConfig);
-
-      player.addEventListener("error", (event: any) => {
-        console.error("Shaka Player Error", event.detail.code, event.detail);
-      });
+      if (!videoRef.current || !videoContainerRef.current || !currentEpisode) return;
 
       try {
+        // @ts-ignore
+        shaka.polyfill.installAll();
+        // @ts-ignore
+        if (!shaka.Player.isBrowserSupported()) {
+          console.error("Browser not supported!");
+          return;
+        }
+
+        // Clean up previous player if exists
+        if (playerRef.current) {
+          try {
+            await playerRef.current.destroy();
+          } catch (e) {
+            console.error("Error destroying previous player", e);
+          }
+        }
+
+        // @ts-ignore
+        const player = new shaka.Player();
+        await player.attach(videoRef.current);
+        playerRef.current = player;
+        shakaPlayerRef.current = player;
+
+        player.addEventListener('timeupdate', () => {
+          if (videoRef.current) {
+            handleProgress();
+          }
+        });
+
+        // @ts-ignore
+        const ui = new shaka.ui.Overlay(
+          player,
+          videoContainerRef.current,
+          videoRef.current
+        );
+
+        const uiConfig = {
+          'controlPanelElements': [
+            'play_pause', 'time_and_duration', 'spacer', 'mute', 'volume', 
+            'quality', 'captions', 'playback_rate', 'fullscreen', 'overflow_menu'
+          ],
+          'overflowMenuButtons': ['language', 'playback_rate', 'captions', 'quality'],
+        };
+        ui.configure(uiConfig);
+
+        player.addEventListener("error", (event: any) => {
+          console.error("Shaka Player Error", event.detail.code, event.detail);
+        });
+
         const sources = currentEpisode.sources || [];
-        const manifestUrl = currentEpisode.sourceUrl || sources[0]?.url;
+        const manifestUrl = currentEpisode.sourceUrl || (sources.length > 0 ? sources[0].url : null);
         const isHls = manifestUrl?.toLowerCase().includes('.m3u8');
         
         player.configure({
