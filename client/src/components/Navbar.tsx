@@ -148,16 +148,26 @@ export function Navbar() {
           <div className="flex items-center gap-2 shrink-0">
             <Button 
               onClick={() => setShowVipModal(true)}
-              className="hidden md:flex bg-accent hover:bg-accent/90 text-accent-foreground font-bold gap-1 rounded-full px-6"
+              className="flex bg-accent hover:bg-accent/90 text-accent-foreground font-bold gap-1 rounded-full px-4 md:px-6 h-9 md:h-10"
             >
               <Crown className="w-4 h-4" />
-              <span>VIP</span>
+              <span className="hidden xs:inline">VIP</span>
+            </Button>
+
+            {/* Mobile Search Trigger */}
+            <Button
+              variant="ghost"
+              size="icon"
+              className="md:hidden h-9 w-9 rounded-full"
+              onClick={() => setShowSearch(!showSearch)}
+            >
+              {showSearch ? <X className="w-5 h-5" /> : <Search className="w-5 h-5" />}
             </Button>
 
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="relative h-10 w-10 rounded-full">
-                  <Avatar className="h-9 w-9 border border-primary/20">
+                <Button variant="ghost" className="relative h-9 w-9 md:h-10 md:w-10 rounded-full p-0">
+                  <Avatar className="h-8 w-8 md:h-9 md:w-9 border border-primary/20">
                     <AvatarImage src={user?.avatarUrl || undefined} alt={user?.username || "Guest"} />
                     <AvatarFallback className="bg-primary/10 text-primary">
                       {user ? user.username.slice(0, 2).toUpperCase() : <UserIcon className="w-5 h-5" />}
@@ -203,27 +213,49 @@ export function Navbar() {
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
-          
-          {/* Mobile User/Auth - if search not expanded */}
-          {!showSearch && (
-            <div className="md:hidden flex items-center gap-2">
-              {user ? (
-                <Link href="/profile">
-                  <Avatar className="h-8 w-8 border border-primary/20">
-                    <AvatarImage src={user.avatarUrl || undefined} alt={user.username} />
-                    <AvatarFallback className="bg-primary/10 text-primary text-[10px]">{user.username.slice(0, 2).toUpperCase()}</AvatarFallback>
-                  </Avatar>
-                </Link>
-              ) : (
-                <Link href="/login">
-                  <Button variant="ghost" size="icon" className="h-9 w-9">
-                    <UserIcon className="w-5 h-5" />
-                  </Button>
-                </Link>
-              )}
-            </div>
-          )}
         </div>
+
+        {/* Mobile Search Bar - Expandable */}
+        {showSearch && (
+          <div className="md:hidden p-4 border-t border-white/5 animate-in slide-in-from-top duration-200">
+            <form onSubmit={handleSearchSubmit} className="relative group">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Input 
+                autoFocus
+                placeholder="Search movies, dramas..." 
+                className="pl-10 bg-secondary/50 border-transparent focus-visible:bg-secondary focus-visible:ring-primary/20 rounded-full h-10 w-full"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
+              {/* Autocomplete Results Mobile */}
+              {search.length >= 2 && searchResults && (
+                <div className="absolute top-full left-0 right-0 mt-2 bg-card border border-white/5 rounded-2xl shadow-2xl overflow-hidden z-50">
+                  {searchResults.length > 0 ? (
+                    searchResults.slice(0, 5).map((video) => (
+                      <Link 
+                        key={video.id} 
+                        href={`/video/${video.id}`}
+                        onClick={() => {
+                          setSearch("");
+                          setShowSearch(false);
+                        }}
+                        className="flex items-center gap-3 p-3 hover:bg-white/5 transition-colors border-b border-white/5 last:border-0"
+                      >
+                        <img src={video.posterUrl} alt={video.title} className="w-10 h-14 object-cover rounded-md" />
+                        <div>
+                          <p className="font-medium text-sm text-white line-clamp-1">{video.title}</p>
+                          <p className="text-xs text-muted-foreground">{video.year} • {video.country}</p>
+                        </div>
+                      </Link>
+                    ))
+                  ) : (
+                    <div className="p-4 text-center text-xs text-muted-foreground">No results found</div>
+                  )}
+                </div>
+              )}
+            </form>
+          </div>
+        )}
       </nav>
 
       {/* Mobile Sub-Nav (Desktop doesn't need this, it's already in the main header) */}
