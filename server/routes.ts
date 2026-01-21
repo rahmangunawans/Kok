@@ -117,34 +117,39 @@ export async function registerRoutes(
   // === Watchlist ===
   app.get(api.watchlist.list.path, async (req, res) => {
     if (!req.isAuthenticated()) return res.status(401).send("Unauthorized");
-    const items = await storage.getWatchlist(req.user!.id);
+    const user = req.user as any;
+    const items = await storage.getWatchlist(user.id);
     res.json(items);
   });
 
   app.post(api.watchlist.add.path, async (req, res) => {
     if (!req.isAuthenticated()) return res.status(401).send("Unauthorized");
-    const item = await storage.addToWatchlist(req.user!.id, req.body.videoId);
+    const user = req.user as any;
+    const item = await storage.addToWatchlist(user.id, req.body.videoId);
     res.status(201).json(item);
   });
 
   app.delete(api.watchlist.remove.path, async (req, res) => {
     if (!req.isAuthenticated()) return res.status(401).send("Unauthorized");
-    await storage.removeFromWatchlist(req.user!.id, Number(req.params.videoId));
+    const user = req.user as any;
+    await storage.removeFromWatchlist(user.id, Number(req.params.videoId));
     res.sendStatus(200);
   });
 
   // === History ===
   app.get(api.history.list.path, async (req, res) => {
     if (!req.isAuthenticated()) return res.status(401).send("Unauthorized");
-    const history = await storage.getWatchHistory(req.user!.id);
+    const user = req.user as any;
+    const history = await storage.getWatchHistory(user.id);
     res.json(history);
   });
 
   app.post(api.history.update.path, async (req, res) => {
     if (!req.isAuthenticated()) return res.status(401).send("Unauthorized");
+    const user = req.user as any;
     const history = await storage.updateWatchHistory({
       ...req.body,
-      userId: req.user!.id
+      userId: user.id
     });
     res.json(history);
   });
