@@ -47,6 +47,8 @@ export default function WatchPage() {
     if (!currentEpisode || !videoRef.current || !videoContainerRef.current) return;
 
     const initPlayer = async () => {
+      if (!videoRef.current || !videoContainerRef.current) return;
+
       // @ts-ignore
       shaka.polyfill.installAll();
       // @ts-ignore
@@ -80,7 +82,6 @@ export default function WatchPage() {
           'overflow_menu'
         ],
         'overflowMenuButtons': ['language', 'playback_rate', 'captions'],
-        'addQualityControls': false,
       };
       ui.configure(uiConfig);
 
@@ -96,78 +97,84 @@ export default function WatchPage() {
         const selectedSource = sources.find((s: any) => s.quality === quality) || sources[0];
         const videoUrl = selectedSource?.url || currentEpisode.sourceUrl;
 
+        if (!videoUrl) {
+          console.error("No video URL found");
+          return;
+        }
+
         // Reset player before loading new source
         await player.unload();
 
-        if (videoRef.current) {
-          // Detect if it's MP4 or HLS
-          const isMp4 = videoUrl.toLowerCase().includes('.mp4');
-          
-          player.configure({
-            manifest: {
-              retryParameters: {
-                maxAttempts: 5,
-                baseDelay: 1000,
-                backoffFactor: 2,
-              },
-              hls: {
-                ignoreTextStreamFailures: true,
-              }
+        // Detect if it's MP4 or HLS
+        const isMp4 = videoUrl.toLowerCase().includes('.mp4');
+        const isHls = videoUrl.toLowerCase().includes('.m3u8');
+        
+        player.configure({
+          manifest: {
+            retryParameters: {
+              maxAttempts: 5,
+              baseDelay: 1000,
+              backoffFactor: 2,
             },
-            streaming: {
-              bufferingGoal: 30,
-              rebufferingGoal: 10,
-              bufferBehind: 30,
-              alwaysStreamText: true,
+            hls: {
+              ignoreTextStreamFailures: true,
             }
-          });
-
-          // Load the video. Force mime type for HLS if needed
-          if (isMp4) {
-            await player.load(videoUrl, null, 'video/mp4');
-          } else {
-            await player.load(videoUrl, null, 'application/x-mpegurl');
+          },
+          streaming: {
+            bufferingGoal: 30,
+            rebufferingGoal: 10,
+            bufferBehind: 30,
+            alwaysStreamText: true,
           }
-          
-          // Subtitles handling
-          if (currentEpisode.subtitles && currentEpisode.subtitles.length > 0) {
-            player.setTextTrackVisibility(true);
-            
-            for (const sub of currentEpisode.subtitles) {
+        });
+
+        // Load the video.
+        if (isMp4) {
+          await player.load(videoUrl, null, 'video/mp4');
+        } else if (isHls) {
+          await player.load(videoUrl, null, 'application/x-mpegurl');
+        } else {
+          await player.load(videoUrl);
+        }
+
+        // Subtitles handling
+        if (currentEpisode.subtitles && currentEpisode.subtitles.length > 0) {
+          player.setTextTrackVisibility(true);
+
+          for (const sub of currentEpisode.subtitles) {
+            try {
+              // SRT needs application/x-subrip
+              await player.addTextTrackAsync(
+                sub.url,
+                sub.language.toLowerCase(),
+                'subtitles',
+                'application/x-subrip',
+                null,
+                sub.language === "ID" ? "Indonesian" : "English"
+              );
+            } catch (trackError: any) {
+              console.warn("Retrying subtitle load without explicit mime type", trackError);
               try {
-                // SRT needs application/x-subrip
                 await player.addTextTrackAsync(
                   sub.url,
                   sub.language.toLowerCase(),
-                  'subtitles',
-                  'application/x-subrip',
-                  null,
-                  sub.language === "ID" ? "Indonesian" : "English"
+                  'subtitles'
                 );
-              } catch (trackError: any) {
-                console.warn("Retrying subtitle load without explicit mime type", trackError);
-                try {
-                  await player.addTextTrackAsync(
-                    sub.url,
-                    sub.language.toLowerCase(),
-                    'subtitles'
-                  );
-                } catch (retryError) {
-                  console.error("Failed to add text track", retryError);
-                }
+              } catch (retryError) {
+                console.error("Failed to add text track", retryError);
               }
             }
-            
-            // Auto-select language
-            setTimeout(() => {
-              const languages = player.getTextLanguages();
-              if (languages.includes('id')) {
-                player.selectTextLanguage('id');
-              } else if (languages.length > 0) {
-                player.selectTextLanguage(languages[0]);
-              }
-            }, 500);
           }
+
+          // Auto-select language
+          setTimeout(() => {
+            const languages = player.getTextLanguages();
+            if (languages.includes('id')) {
+              player.selectTextLanguage('id');
+            } else if (languages.length > 0) {
+              player.selectTextLanguage(languages[0]);
+            }
+          }, 500);
         }
       } catch (e: any) {
         console.error("Critical Shaka Load Error", e);
