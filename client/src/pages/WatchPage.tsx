@@ -32,15 +32,9 @@ export default function WatchPage() {
   const { mutate: updateHistory } = useUpdateHistory();
 
   const [hasWindow, setHasWindow] = useState(false);
-  const [quality, setQuality] = useState("auto");
-  
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const videoContainerRef = useRef<HTMLDivElement>(null);
-  const playerRef = useRef<any>(null);
-
-  useEffect(() => {
-    setHasWindow(true);
-  }, []);
+  const [quality, setQuality] = useState("1080p");
+  const sources = currentEpisode?.sources || [];
+  const shakaPlayerRef = useRef<any>(null);
 
   // Initialize Shaka Player
   useEffect(() => {
@@ -61,6 +55,7 @@ export default function WatchPage() {
       const player = new shaka.Player();
       await player.attach(videoRef.current);
       playerRef.current = player;
+      shakaPlayerRef.current = player;
 
       // Listen for time updates directly from player if needed, 
       // though native onTimeUpdate should work.
@@ -212,37 +207,12 @@ export default function WatchPage() {
     };
   }, [currentEpisode, quality]);
 
-  // Quality Handling
-  const [quality, setQuality] = useState("1080p");
-  const sources = currentEpisode?.sources || [];
-
-  // Manual source switching for Shaka (since we are using separate manifests)
+  // Manual redirect for old IDs if necessary, or just inform user
   useEffect(() => {
-    if (!shakaPlayerRef.current || !currentEpisode) return;
-    
-    const switchSource = async () => {
-      const selectedSource = sources.find((s: any) => s.quality === quality) || sources[0];
-      const videoUrl = selectedSource?.url || currentEpisode.sourceUrl;
-      
-      if (videoUrl) {
-        try {
-          const currentTime = videoRef.current?.currentTime || 0;
-          const isPaused = videoRef.current?.paused;
-          
-          await shakaPlayerRef.current.load(videoUrl);
-          
-          if (videoRef.current) {
-            videoRef.current.currentTime = currentTime;
-            if (!isPaused) videoRef.current.play();
-          }
-        } catch (e) {
-          console.error("Error switching quality", e);
-        }
-      }
-    };
-
-    switchSource();
-  }, [quality]);
+    if (loadingEpisode === false && !currentEpisode && vId === 4 && eId === 1) {
+      setLocation("/watch/8/2");
+    }
+  }, [currentEpisode, loadingEpisode, vId, eId, setLocation]);
 
   // Keyboard Shortcuts
   useEffect(() => {
