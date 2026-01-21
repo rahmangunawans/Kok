@@ -47,6 +47,13 @@
   --sidebar-border: 240 5% 15%;
   --sidebar-accent: 40 64% 50%;
   --sidebar-accent-foreground: 240 10% 9%;
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
 }
 
 @layer base {

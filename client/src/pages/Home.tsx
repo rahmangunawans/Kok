@@ -58,9 +58,11 @@ export default function Home() {
               View All
             </Link>
           </div>
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-x-4 gap-y-8 md:gap-x-6">
+          <div className="flex overflow-x-auto pb-4 -mx-4 px-4 md:grid md:grid-cols-3 lg:grid-cols-5 xl:grid-cols-6 gap-x-4 gap-y-8 md:gap-x-6 md:overflow-visible md:pb-0 scrollbar-hide">
             {allVideos?.slice(0, 12).map((video) => (
-              <VideoCard key={video.id} video={video} />
+              <div key={video.id} className="min-w-[160px] sm:min-w-[200px] md:min-w-0">
+                <VideoCard video={video} />
+              </div>
             ))}
           </div>
         </section>
@@ -75,12 +77,14 @@ export default function Home() {
               </Link>
             </div>
             {/* Filter videos by category locally for this preview section */}
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-x-4 gap-y-8 md:gap-x-6">
+            <div className="flex overflow-x-auto pb-4 -mx-4 px-4 md:grid md:grid-cols-3 lg:grid-cols-5 xl:grid-cols-6 gap-x-4 gap-y-8 md:gap-x-6 md:overflow-visible md:pb-0 scrollbar-hide">
               {allVideos
                 ?.filter(v => v.categoryId === category.id)
-                .slice(0, 6)
+                .slice(0, 10)
                 .map((video) => (
-                  <VideoCard key={video.id} video={video} />
+                  <div key={video.id} className="min-w-[160px] sm:min-w-[200px] md:min-w-0">
+                    <VideoCard video={video} />
+                  </div>
                 ))}
             </div>
           </section>
