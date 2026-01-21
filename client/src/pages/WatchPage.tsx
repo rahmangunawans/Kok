@@ -66,9 +66,35 @@ export default function WatchPage() {
         videoRef.current
       );
 
+      // Configure Shaka UI
+      const config = {
+        'controlPanelElements': [
+          'play_pause',
+          'time_and_duration',
+          'spacer',
+          'mute',
+          'volume',
+          'captions',
+          'quality',
+          'playback_rate',
+          'fullscreen',
+          'overflow_menu'
+        ],
+        'addLanguageControls': true,
+        'addQualityControls': true,
+        'castReceiverAppId': 'CC1AD845',
+        'clearBufferOnQualityChange': true,
+      };
+      ui.configure(config);
+
       player.addEventListener("error", (event: any) => {
         console.error("Error code", event.detail.code, "object", event.detail);
       });
+
+      // Handle quality selection change to reload the player with the new URL
+      // Note: Shaka usually handles quality internally if the manifest allows it,
+      // but here we are using multiple single-stream URLs.
+      // So we use the 'quality' state to trigger a reload.
 
       try {
         const sources = currentEpisode.sources && currentEpisode.sources.length > 0 
@@ -78,6 +104,20 @@ export default function WatchPage() {
         const videoUrl = sources.find((s: any) => s.quality === quality)?.url || sources[0]?.url || currentEpisode.sourceUrl;
 
         await player.load(videoUrl);
+        
+        // Add subtitles to Shaka Player after loading
+        if (currentEpisode.subtitles && currentEpisode.subtitles.length > 0) {
+          currentEpisode.subtitles.forEach((sub: any) => {
+            player.addTextTrackAsync(
+              sub.url,
+              sub.language.toLowerCase(),
+              'subtitles',
+              'text/vtt',
+              null,
+              sub.language === "ID" ? "Indonesian" : "English"
+            );
+          });
+        }
       } catch (e: any) {
         console.error("Error loading video", e);
       }
@@ -195,12 +235,13 @@ export default function WatchPage() {
           </Link>
         </div>
 
-        <div className="absolute bottom-12 right-4 z-20 flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-          {sources.length > 0 && (
+        {/* Manual Quality Selection (Since we are using multiple HLS URLs instead of a single manifest) */}
+        <div className="absolute bottom-16 right-4 z-20 flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+          {sources.length > 1 && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button size="icon" variant="ghost" className="text-white hover:bg-white/10 backdrop-blur-sm">
-                  <Settings className="h-5 w-5" />
+                <Button size="sm" variant="ghost" className="text-white hover:bg-white/10 backdrop-blur-sm h-8 px-2 text-xs">
+                  <Settings className="h-3 w-3 mr-1" /> {quality}
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="bg-[#1a1a1c] border-white/10 text-white">
@@ -218,6 +259,7 @@ export default function WatchPage() {
           )}
         </div>
 
+        {/* Remove manually implemented controls to avoid duplication with Shaka UI */}
         <video
           ref={videoRef}
           className="w-full h-full"
