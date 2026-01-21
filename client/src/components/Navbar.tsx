@@ -286,60 +286,71 @@ export function Navbar() {
 
       {/* VIP Modal */}
       <Dialog open={showVipModal} onOpenChange={setShowVipModal}>
-        <DialogContent className="sm:max-w-[480px] p-0 border-white/5 bg-background overflow-hidden max-h-[90vh] flex flex-col">
-          <div className="relative p-6 bg-gradient-to-br from-accent/20 to-background">
-            <DialogHeader>
-              <DialogTitle className="text-2xl font-display font-black text-accent flex items-center gap-2">
-                <Crown className="w-6 h-6 fill-current" />
-                YOUKU VIP
-              </DialogTitle>
-              <div className="mt-2 text-sm text-muted-foreground">
-                {!user && (
-                  <button 
-                    onClick={() => {
-                      setShowVipModal(false);
-                      if (location === "/") {
-                        window.dispatchEvent(new CustomEvent('open-auth-modal'));
-                      } else {
-                        setLocation("/");
-                        setTimeout(() => {
-                          window.dispatchEvent(new CustomEvent('open-auth-modal'));
-                        }, 100);
-                      }
-                    }} 
-                    className="text-primary hover:underline font-medium"
-                  >
-                    Log in/Sign up
-                  </button>
-                )}
+        <DialogContent className="sm:max-w-[440px] p-0 border-white/5 bg-[#121214] overflow-hidden max-h-[90vh] flex flex-col rounded-2xl shadow-2xl">
+          <div className="relative p-5 bg-gradient-to-br from-[#d0992e]/20 to-transparent">
+            <DialogHeader className="flex flex-row items-center justify-between gap-4">
+              <div className="space-y-1">
+                <DialogTitle className="text-xl font-display font-black text-[#d0992e] flex items-center gap-2">
+                  <Crown className="w-5 h-5 fill-current" />
+                  YOUKU VIP
+                </DialogTitle>
+                <div className="text-[11px] text-gray-500 font-medium">
+                  {!user && (
+                    <>
+                      Sign in to enjoy more benefits.{" "}
+                      <button 
+                        onClick={() => {
+                          setShowVipModal(false);
+                          if (location === "/") {
+                            window.dispatchEvent(new CustomEvent('open-auth-modal'));
+                          } else {
+                            setLocation("/");
+                            setTimeout(() => {
+                              window.dispatchEvent(new CustomEvent('open-auth-modal'));
+                            }, 100);
+                          }
+                        }} 
+                        className="text-primary hover:underline font-bold"
+                      >
+                        Log in/Sign up
+                      </button>
+                    </>
+                  )}
+                </div>
               </div>
+              <button 
+                onClick={() => setShowVipModal(false)}
+                className="p-1.5 rounded-full bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white transition-all outline-none border-none"
+              >
+                <X className="w-4 h-4" />
+              </button>
             </DialogHeader>
           </div>
 
-          <div className="flex-1 overflow-y-auto p-6 space-y-4 no-scrollbar">
+          <div className="flex-1 overflow-y-auto p-5 space-y-4 no-scrollbar">
             <div className="grid grid-cols-1 gap-3">
               {vipPlans.map((plan) => (
                 <div 
                   key={plan.id}
                   onClick={() => setSelectedPlan(plan)}
-                  className={`relative p-4 rounded-xl border-2 transition-all cursor-pointer ${selectedPlan.id === plan.id ? 'border-accent bg-accent/5 shadow-[0_0_20px_rgba(208,153,46,0.1)]' : 'border-white/5 bg-secondary/30 hover:border-white/20'}`}
+                  className={`relative p-4 rounded-xl border transition-all cursor-pointer ${selectedPlan.id === plan.id ? 'border-[#d0992e] bg-[#d0992e]/10 shadow-[0_0_20px_rgba(208,153,46,0.1)]' : 'border-white/5 bg-white/5 hover:border-white/10'}`}
                 >
                   <div className="flex justify-between items-start mb-1">
-                    <span className="font-bold text-white text-sm md:text-base">{plan.name}</span>
+                    <span className="font-bold text-white text-sm">{plan.name}</span>
                     {plan.discount && (
-                      <Badge className="bg-accent text-accent-foreground text-[10px] font-black border-0">
+                      <Badge className="bg-[#d0992e] text-black text-[9px] font-black border-0 rounded-md px-1.5 py-0">
                         {plan.discount}
                       </Badge>
                     )}
                   </div>
                   <div className="flex items-baseline gap-2">
-                    <span className="text-xl md:text-2xl font-black text-accent">{plan.price}</span>
-                    <span className="text-xs md:text-sm text-muted-foreground line-through">{plan.originalPrice}</span>
+                    <span className="text-xl font-black text-[#d0992e]">{plan.price}</span>
+                    <span className="text-xs text-gray-500 line-through">{plan.originalPrice}</span>
                   </div>
                   {selectedPlan.id === plan.id && (
                     <div className="absolute right-4 bottom-4">
-                      <div className="w-5 h-5 rounded-full bg-accent flex items-center justify-center">
-                        <Check className="w-3.5 h-3.5 text-accent-foreground stroke-[3]" />
+                      <div className="w-4 h-4 rounded-full bg-[#d0992e] flex items-center justify-center">
+                        <Check className="w-2.5 h-2.5 text-black stroke-[4]" />
                       </div>
                     </div>
                   )}
@@ -347,31 +358,31 @@ export function Navbar() {
               ))}
             </div>
 
-            <div className="p-4 rounded-xl bg-accent/10 border border-accent/20">
-              <p className="text-xs md:text-sm font-medium text-accent">
+            <div className="p-3.5 rounded-xl bg-[#d0992e]/10 border border-[#d0992e]/20">
+              <p className="text-[11px] font-bold text-[#d0992e] text-center">
                 New subscribers get 60% off the first term!
               </p>
             </div>
           </div>
 
-          <div className="p-6 border-t border-white/5 bg-secondary/10">
+          <div className="p-5 border-t border-white/5 bg-white/[0.02]">
             <div className="flex justify-between items-center mb-4">
               <div>
-                <span className="text-2xl font-black text-accent">{selectedPlan.price}</span>
+                <span className="text-xl font-black text-[#d0992e]">{selectedPlan.price}</span>
                 {selectedPlan.saving && (
-                  <p className="text-xs text-green-500 font-medium">{selectedPlan.saving}</p>
+                  <p className="text-[10px] text-green-500 font-bold">{selectedPlan.saving}</p>
                 )}
               </div>
-              <span className="text-xs text-muted-foreground">Choose Payment Method</span>
+              <span className="text-[11px] text-gray-500 font-medium">Choose Payment Method</span>
             </div>
             
-            <Button className="w-full bg-accent hover:bg-accent/90 text-accent-foreground font-black h-12 text-base md:text-lg rounded-full shadow-lg shadow-accent/20">
+            <Button className="w-full bg-[#d0992e] hover:bg-[#d0992e]/90 text-black font-black h-11 text-base rounded-full shadow-lg shadow-[#d0992e]/20 transition-all active:scale-[0.98]">
               Pay now {selectedPlan.price}
             </Button>
             
-            <div className="mt-4 flex flex-wrap justify-center gap-x-4 gap-y-1 text-[10px] text-muted-foreground">
-              <button className="hover:text-accent">VIP Membership Terms</button>
-              <button className="hover:text-accent">Privacy Policy</button>
+            <div className="mt-4 flex flex-wrap justify-center gap-x-4 gap-y-1 text-[9px] text-gray-600 font-medium">
+              <button className="hover:text-[#d0992e] transition-colors">VIP Membership Terms</button>
+              <button className="hover:text-[#d0992e] transition-colors">Privacy Policy</button>
             </div>
           </div>
         </DialogContent>
