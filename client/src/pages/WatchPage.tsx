@@ -79,8 +79,7 @@ export default function WatchPage() {
           'fullscreen',
           'overflow_menu'
         ],
-        'overflowMenuButtons': ['language', 'playback_rate', 'captions'],
-        'addQualityControls': false, // Disable built-in quality controls to avoid duplicates
+        'overflowMenuButtons': ['language', 'playback_rate', 'captions']
       };
       ui.configure(uiConfig);
 
@@ -96,38 +95,82 @@ export default function WatchPage() {
         const selectedSource = sources.find((s: any) => s.quality === quality) || sources[0];
         const videoUrl = selectedSource?.url || currentEpisode.sourceUrl;
 
-        // Reset player before loading new source to avoid state issues
+        // Reset player before loading new source
         await player.unload();
-        await player.load(videoUrl);
-        
-        // Add subtitles to Shaka Player after loading
-        if (currentEpisode.subtitles && currentEpisode.subtitles.length > 0) {
-          player.setTextTrackVisibility(true);
-          
-          for (const sub of currentEpisode.subtitles) {
-            try {
-              // Note: Shaka Player handles SRT via application/x-subrip
-              await player.addTextTrackAsync(
-                sub.url,
-                sub.language.toLowerCase(),
-                'subtitles',
-                'application/x-subrip',
-                null,
-                sub.language === "ID" ? "Indonesian" : "English"
-              );
-            } catch (trackError) {
-              console.error("Error adding text track", trackError);
+
+        if (videoRef.current) {
+          // Shaka Player v4+ HLS Configuration
+          player.configure({
+            manifest: {
+              retryParameters: {
+                maxAttempts: 5,
+                baseDelay: 1000,
+                backoffFactor: 2,
+              },
+              hls: {
+                ignoreTextStreamFailures: true,
+              }
+            },
+            streaming: {
+              bufferingGoal: 30,
+              rebufferingGoal: 10,
+              bufferBehind: 30,
+              alwaysStreamText: true,
             }
-          }
+          });
+
+          // Load the video. Shaka auto-detects HLS from .m3u8 extension or content
+          await player.load(videoUrl);
           
-          // Selection must happen after tracks are added
-          const languages = player.getTextLanguages();
-          if (languages.includes('id')) {
-            player.selectTextLanguage('id');
+          // Subtitles handling
+          if (currentEpisode.subtitles && currentEpisode.subtitles.length > 0) {
+            player.setTextTrackVisibility(true);
+            
+            for (const sub of currentEpisode.subtitles) {
+              try {
+                // SRT needs application/x-subrip
+                // WebVTT is preferred but we use what we have
+                await player.addTextTrackAsync(
+                  sub.url,
+                  sub.language.toLowerCase(),
+                  'subtitles',
+                  'application/x-subrip',
+                  null,
+                  sub.language === "ID" ? "Indonesian" : "English"
+                );
+              } catch (trackError: any) {
+                console.warn("Retrying subtitle load without explicit mime type", trackError);
+                try {
+                  await player.addTextTrackAsync(
+                    sub.url,
+                    sub.language.toLowerCase(),
+                    'subtitles'
+                  );
+                } catch (retryError) {
+                  console.error("Failed to add text track", retryError);
+                }
+              }
+            }
+            
+            // Auto-select language
+            setTimeout(() => {
+              const languages = player.getTextLanguages();
+              if (languages.includes('id')) {
+                player.selectTextLanguage('id');
+              } else if (languages.length > 0) {
+                player.selectTextLanguage(languages[0]);
+              }
+            }, 500);
           }
         }
       } catch (e: any) {
-        console.error("Error loading video", e);
+        console.error("Critical Shaka Load Error", e);
+        // Direct HTML5 Fallback if Shaka fails
+        if (videoRef.current) {
+          const selectedSource = (currentEpisode.sources || []).find((s: any) => s.quality === quality) || (currentEpisode.sources || [])[0];
+          videoRef.current.src = selectedSource?.url || currentEpisode.sourceUrl;
+          videoRef.current.load();
+        }
       }
     };
 
