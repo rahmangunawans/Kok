@@ -85,32 +85,40 @@ export function Navbar() {
             <span>YOUKU</span>
           </Link>
 
-          {/* Search - Mobile Toggle */}
-          <div className="flex md:hidden flex-1 items-center justify-end gap-2">
-            <Button variant="ghost" size="icon" onClick={() => setShowSearch(!showSearch)} className="h-9 w-9 text-muted-foreground">
-              {showSearch ? <X className="w-5 h-5" /> : <Search className="w-5 h-5" />}
-            </Button>
-            <Button 
-              onClick={() => setShowVipModal(true)}
-              className="h-8 md:h-9 bg-accent hover:bg-accent/90 text-accent-foreground text-xs md:text-sm font-bold gap-1 rounded-full px-3 md:px-4"
-            >
-              <Crown className="w-3.5 h-3.5" />
-              <span>VIP</span>
-            </Button>
+          {/* Navigation - Desktop */}
+          <div className="hidden md:flex items-center gap-1">
+            <Link href="/" className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${location === "/" ? "text-primary bg-primary/10" : "text-muted-foreground hover:text-primary hover:bg-white/5"}`}>
+              Home
+            </Link>
+            <Link href="/category/drama" className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${location === "/category/drama" ? "text-primary bg-primary/10" : "text-muted-foreground hover:text-primary hover:bg-white/5"}`}>
+              Drama
+            </Link>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${location.startsWith("/category/") && location !== "/category/drama" ? "text-primary bg-primary/10" : "text-muted-foreground hover:text-primary hover:bg-white/5"}`}>
+                  All
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="w-40">
+                <DropdownMenuItem onClick={() => setLocation("/category/movie")}>Movies</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setLocation("/category/anime")}>Anime</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setLocation("/category/variety")}>Variety</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setLocation("/category/documentary")}>Documentary</DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
 
-          {/* Search Bar - Desktop & Mobile Expanded */}
-          <div className={`${showSearch ? 'absolute inset-x-0 top-16 bg-background p-4 border-b border-white/5 md:relative md:top-0 md:bg-transparent md:p-0 md:border-0' : 'hidden'} md:block flex-1 max-w-md`}>
+          {/* Search Bar - Center Desktop */}
+          <div className="hidden md:block flex-1 max-w-md mx-auto">
             <form onSubmit={handleSearchSubmit} className="relative group">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
               <Input 
                 placeholder="Search movies, dramas..." 
-                className="pl-10 bg-secondary/50 border-transparent focus-visible:bg-secondary focus-visible:ring-primary/20 rounded-full h-9 md:h-10 transition-all"
+                className="pl-10 bg-secondary/50 border-transparent focus-visible:bg-secondary focus-visible:ring-primary/20 rounded-full h-10 transition-all"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                autoFocus={showSearch}
               />
-              {/* Autocomplete Results */}
+              {/* Autocomplete Results Desktop */}
               {search.length >= 2 && searchResults && (
                 <div className="absolute top-full left-0 right-0 mt-2 bg-card border border-white/5 rounded-2xl shadow-2xl overflow-hidden z-50">
                   {searchResults.length > 0 ? (
@@ -118,10 +126,7 @@ export function Navbar() {
                       <Link 
                         key={video.id} 
                         href={`/video/${video.id}`}
-                        onClick={() => {
-                          setSearch("");
-                          setShowSearch(false);
-                        }}
+                        onClick={() => setSearch("")}
                         className="flex items-center gap-3 p-3 hover:bg-white/5 transition-colors border-b border-white/5 last:border-0"
                       >
                         <img src={video.posterUrl} alt={video.title} className="w-10 h-14 object-cover rounded-md" />
@@ -139,69 +144,64 @@ export function Navbar() {
             </form>
           </div>
 
-          {/* Desktop Navigation & User Menu */}
-          <div className="hidden md:flex items-center gap-4">
-            <div className="flex items-center gap-1">
-              {navLinks.map((link) => (
-                <Link key={link.href} href={link.href} className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${location === link.href ? "text-primary bg-primary/10" : "text-muted-foreground hover:text-primary hover:bg-white/5"}`}>
-                  {link.name}
-                </Link>
-              ))}
-            </div>
-
+          {/* User Menu / Auth Profile Icon */}
+          <div className="flex items-center gap-2 shrink-0">
             <Button 
               onClick={() => setShowVipModal(true)}
-              className="bg-accent hover:bg-accent/90 text-accent-foreground font-bold gap-1 rounded-full px-6"
+              className="hidden md:flex bg-accent hover:bg-accent/90 text-accent-foreground font-bold gap-1 rounded-full px-6"
             >
               <Crown className="w-4 h-4" />
               <span>VIP</span>
             </Button>
 
-            {user ? (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="relative h-10 w-10 rounded-full">
-                    <Avatar className="h-9 w-9 border border-primary/20">
-                      <AvatarImage src={user.avatarUrl || undefined} alt={user.username} />
-                      <AvatarFallback className="bg-primary/10 text-primary">{user.username.slice(0, 2).toUpperCase()}</AvatarFallback>
-                    </Avatar>
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent className="w-56" align="end" forceMount>
-                  <DropdownMenuLabel className="font-normal">
-                    <div className="flex flex-col space-y-1">
-                      <p className="text-sm font-medium leading-none">{user.username}</p>
-                      <p className="text-xs leading-none text-muted-foreground">{user.isAdmin ? 'Admin' : 'Member'}</p>
-                    </div>
-                  </DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={() => setLocation("/profile")}>
-                    <UserIcon className="mr-2 h-4 w-4" />
-                    <span>Profile & History</span>
-                  </DropdownMenuItem>
-                  {user.isAdmin && (
-                    <DropdownMenuItem onClick={() => setLocation("/admin")}>
-                      <MonitorPlay className="mr-2 h-4 w-4" />
-                      <span>Admin Panel</span>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="relative h-10 w-10 rounded-full">
+                  <Avatar className="h-9 w-9 border border-primary/20">
+                    <AvatarImage src={user?.avatarUrl || undefined} alt={user?.username || "Guest"} />
+                    <AvatarFallback className="bg-primary/10 text-primary">
+                      {user ? user.username.slice(0, 2).toUpperCase() : <UserIcon className="w-5 h-5" />}
+                    </AvatarFallback>
+                  </Avatar>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="w-56" align="end" forceMount>
+                {user ? (
+                  <>
+                    <DropdownMenuLabel className="font-normal">
+                      <div className="flex flex-col space-y-1">
+                        <p className="text-sm font-medium leading-none">{user.username}</p>
+                        <p className="text-xs leading-none text-muted-foreground">{user.isAdmin ? 'Admin' : 'Member'}</p>
+                      </div>
+                    </DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={() => setLocation("/profile")}>
+                      <UserIcon className="mr-2 h-4 w-4" />
+                      <span>Profile & History</span>
                     </DropdownMenuItem>
-                  )}
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={() => logout()} className="text-red-500 focus:text-red-500 focus:bg-red-500/10">
-                    <LogOut className="mr-2 h-4 w-4" />
-                    <span>Log out</span>
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            ) : (
-              <div className="flex items-center gap-2">
-                <Link href="/login">
-                  <Button variant="ghost" size="sm">Log in</Button>
-                </Link>
-                <Link href="/register">
-                  <Button size="sm" className="rounded-full px-6">Sign Up</Button>
-                </Link>
-              </div>
-            )}
+                    {user.isAdmin && (
+                      <DropdownMenuItem onClick={() => setLocation("/admin")}>
+                        <MonitorPlay className="mr-2 h-4 w-4" />
+                        <span>Admin Panel</span>
+                      </DropdownMenuItem>
+                    )}
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={() => logout()} className="text-red-500 focus:text-red-500 focus:bg-red-500/10">
+                      <LogOut className="mr-2 h-4 w-4" />
+                      <span>Log out</span>
+                    </DropdownMenuItem>
+                  </>
+                ) : (
+                  <>
+                    <DropdownMenuLabel>Account</DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={() => setLocation("/login")}>
+                      <span>Sign In / Register</span>
+                    </DropdownMenuItem>
+                  </>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
           
           {/* Mobile User/Auth - if search not expanded */}
