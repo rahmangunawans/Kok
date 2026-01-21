@@ -8,37 +8,45 @@
   --font-display: 'Outfit', sans-serif;
   --font-body: 'Inter', sans-serif;
 
-  /* Youku-inspired Dark Theme by default */
-  --background: 222 47% 11%;
-  --foreground: 210 40% 98%;
+  /* Youku-inspired Dark Theme - Exact Match from branding.json */
+  --background: 240 10% 9%; /* #16161A */
+  --foreground: 240 5% 64%; /* #A2A2A3 */
 
-  --card: 224 40% 16%;
+  --card: 240 10% 12%;
   --card-foreground: 210 40% 98%;
+  --card-border: 240 5% 20%;
 
-  --popover: 224 40% 16%;
+  --popover: 240 10% 12%;
   --popover-foreground: 210 40% 98%;
 
-  /* Brand Blue - Vibrant and Electric */
-  --primary: 217 91% 60%;
-  --primary-foreground: 222 47% 11%;
+  /* Brand Gold/Accent */
+  --primary: 40 100% 80%; /* #FFDD9A */
+  --primary-foreground: 240 10% 9%;
 
-  --secondary: 224 35% 20%;
+  --secondary: 240 5% 15%;
   --secondary-foreground: 210 40% 98%;
 
-  --muted: 217 19% 27%;
-  --muted-foreground: 215 20% 65%;
+  --muted: 240 5% 15%;
+  --muted-foreground: 240 5% 50%;
 
-  --accent: 217 91% 60%;
-  --accent-foreground: 222 47% 11%;
+  --accent: 40 64% 50%; /* #D0992E */
+  --accent-foreground: 240 10% 9%;
 
   --destructive: 0 62% 30%;
   --destructive-foreground: 210 40% 98%;
 
-  --border: 217 19% 27%;
-  --input: 217 19% 27%;
-  --ring: 224 76% 48%;
+  --border: 240 5% 15%;
+  --input: 240 5% 15%;
+  --ring: 40 64% 50%;
 
-  --radius: 0.75rem;
+  --radius: 0.5rem;
+
+  /* Sidebar */
+  --sidebar: 240 10% 9%;
+  --sidebar-foreground: 240 5% 64%;
+  --sidebar-border: 240 5% 15%;
+  --sidebar-accent: 40 64% 50%;
+  --sidebar-accent-foreground: 240 10% 9%;
 }
 
 @layer base {
@@ -73,6 +81,16 @@
   
   .hero-gradient {
     background: linear-gradient(to top, hsl(var(--background)) 0%, transparent 100%);
+  }
+
+  /* VIP Badge Style */
+  .vip-badge {
+    @apply absolute top-1 right-1 bg-accent text-accent-foreground text-[10px] font-bold px-1.5 py-0.5 rounded-sm z-10;
+  }
+
+  /* Rank Number Style */
+  .rank-number {
+    @apply text-5xl font-black italic text-muted-foreground/20 absolute -left-4 bottom-2 leading-none pointer-events-none;
   }
 }
 

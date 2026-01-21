@@ -170,23 +170,43 @@ async function seedData() {
     const animeCat = insertedCats.find((c: any) => c.slug === "anime");
     
     if (dramaCat) {
-      const [v1] = await db.insert(videos).values({
-        title: "The Long Ballad",
-        description: "A historical drama about a princess seeking revenge.",
-        posterUrl: "https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=500&q=80",
-        bannerUrl: "https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=1200&q=80",
-        rating: 9.2,
-        year: 2023,
-        country: "China",
-        categoryId: dramaCat.id,
-        isFeatured: true,
-        isVip: true
-      }).returning();
-      
-      // Episodes
-      await db.insert(episodes).values([
-        { videoId: v1.id, title: "Episode 1", episodeNumber: 1, sourceUrl: "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8", duration: 2400 },
-        { videoId: v1.id, title: "Episode 2", episodeNumber: 2, sourceUrl: "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8", duration: 2400 },
+      await db.insert(videos).values([
+        {
+          title: "Blossoms in Adversity",
+          description: "Hu Yitian and Zhang Jingyi turn the table. A down-and-out girl becomes the richest person.",
+          posterUrl: "https://m.ykimg.com/058400006843FF361409CB111BDBD094?x-oss-process=image/resize,w_385/interlace,1/quality,Q_80",
+          bannerUrl: "http://liangcang-material.alicdn.com/prod/upload/4b7015edb77445ee8e98573b9315286b.webp.png",
+          rating: 9.5,
+          year: 2024,
+          country: "China",
+          categoryId: dramaCat.id,
+          isFeatured: true,
+          isVip: true
+        },
+        {
+          title: "The Seven Relics of ill Omen",
+          description: "A mysterious journey through ancient relics.",
+          posterUrl: "https://m.ykimg.com/058400006843FF361409CB111BDBD094?x-oss-process=image/resize,w_385/interlace,1/quality,Q_80",
+          bannerUrl: "https://m.ykimg.com/058400006843FF361409CB111BDBD094?x-oss-process=image/resize,w_1200",
+          rating: 9.1,
+          year: 2024,
+          country: "China",
+          categoryId: dramaCat.id,
+          isFeatured: false,
+          isVip: true
+        },
+        {
+          title: "Love After Eternity",
+          description: "A romance that spans lifetimes.",
+          posterUrl: "https://m.ykimg.com/05840000695DFEE47B519718FC00D18A?x-oss-process=image/resize,w_385/interlace,1/quality,Q_80",
+          bannerUrl: "https://m.ykimg.com/05840000695DFEE47B519718FC00D18A?x-oss-process=image/resize,w_1200",
+          rating: 9.3,
+          year: 2024,
+          country: "China",
+          categoryId: dramaCat.id,
+          isFeatured: false,
+          isVip: true
+        }
       ]);
     }
     

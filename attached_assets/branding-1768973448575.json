@@ -1,0 +1,121 @@
+{
+  "colorScheme": "dark",
+  "fonts": [
+    {
+      "family": "pingfang SC",
+      "count": 55
+    },
+    {
+      "family": "Microsoft YaHei",
+      "count": 55
+    },
+    {
+      "family": "微软雅黑",
+      "count": 55
+    },
+    {
+      "family": "helvetica",
+      "count": 55
+    },
+    {
+      "family": "arial",
+      "count": 55
+    },
+    {
+      "family": "verdana",
+      "count": 55
+    },
+    {
+      "family": "tahoma",
+      "count": 55
+    },
+    {
+      "family": "sans-serif",
+      "count": 55
+    },
+    {
+      "family": "iconfonttotal",
+      "count": 2
+    }
+  ],
+  "colors": {
+    "primary": "#FFDD9A",
+    "accent": "#D0992E",
+    "background": "#16161A",
+    "textPrimary": "#16161A",
+    "link": "#D0992E"
+  },
+  "typography": {
+    "fontFamilies": {
+      "primary": "pingfang SC",
+      "heading": "pingfang SC"
+    },
+    "fontStacks": {
+      "body": [
+        "pingfang SC",
+        "Microsoft YaHei",
+        "微软雅黑",
+        "helvetica",
+        "arial",
+        "verdana",
+        "tahoma",
+        "sans-serif"
+      ],
+      "heading": [
+        "pingfang SC",
+        "Microsoft YaHei",
+        "微软雅黑",
+        "helvetica",
+        "arial",
+        "verdana",
+        "tahoma",
+        "sans-serif"
+      ],
+      "paragraph": [
+        "pingfang SC",
+        "Microsoft YaHei",
+        "微软雅黑",
+        "helvetica",
+        "arial",
+        "verdana",
+        "tahoma",
+        "sans-serif"
+      ]
+    },
+    "fontSizes": {
+      "h1": "12px",
+      "h2": "12px",
+      "body": "14px"
+    }
+  },
+  "spacing": {
+    "baseUnit": 4,
+    "borderRadius": "6px"
+  },
+  "components": {
+    "input": {
+      "background": "transparent",
+      "textColor": "#A2A2A3",
+      "borderColor": null,
+      "borderRadius": "0px",
+      "borderRadiusCorners": {
+        "topLeft": "0px",
+        "topRight": "0px",
+        "bottomRight": "0px",
+        "bottomLeft": "0px"
+      },
+      "shadow": "none"
+    }
+  },
+  "images": {
+    "logo": null,
+    "favicon": "File saved at: attached_assets/favicon.png",
+    "ogImage": "File saved at: attached_assets/ogImage.png"
+  },
+  "__framework_hints": [],
+  "confidence": {
+    "buttons": 0,
+    "colors": 0,
+    "overall": 0
+  }
+}
