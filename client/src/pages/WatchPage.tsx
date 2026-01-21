@@ -39,183 +39,9 @@ export default function WatchPage() {
   const playerRef = useRef<any>(null);
   const shakaPlayerRef = useRef<any>(null);
 
-  // Initialize Shaka Player
   useEffect(() => {
-    if (!currentEpisode || !videoRef.current || !videoContainerRef.current) return;
-
-    const initPlayer = async () => {
-      if (!videoRef.current || !videoContainerRef.current) return;
-
-      // @ts-ignore
-      shaka.polyfill.installAll();
-      // @ts-ignore
-      if (!shaka.Player.isBrowserSupported()) {
-        console.error("Browser not supported!");
-        return;
-      }
-
-      // @ts-ignore
-      const player = new shaka.Player();
-      await player.attach(videoRef.current);
-      playerRef.current = player;
-      shakaPlayerRef.current = player;
-
-      // Listen for time updates directly from player if needed, 
-      // though native onTimeUpdate should work.
-      player.addEventListener('timeupdate', () => {
-        if (videoRef.current) {
-          handleProgress();
-        }
-      });
-
-      // @ts-ignore
-      const ui = new shaka.ui.Overlay(
-        player,
-        videoContainerRef.current,
-        videoRef.current
-      );
-
-      // Configure Shaka UI
-      const uiConfig = {
-        'controlPanelElements': [
-          'play_pause',
-          'time_and_duration',
-          'spacer',
-          'mute',
-          'volume',
-          'quality',
-          'captions',
-          'playback_rate',
-          'fullscreen',
-          'overflow_menu'
-        ],
-        'overflowMenuButtons': ['language', 'playback_rate', 'captions', 'quality'],
-      };
-      ui.configure(uiConfig);
-
-      player.addEventListener("error", (event: any) => {
-        console.error("Shaka Player Error", event.detail.code, event.detail);
-      });
-
-      try {
-        const sources = currentEpisode.sources && currentEpisode.sources.length > 0 
-          ? currentEpisode.sources 
-          : [];
-
-        // Reset player before loading new source
-        await player.unload();
-
-        // Detect if it's MP4 or HLS
-        const firstUrl = sources[0]?.url || currentEpisode.sourceUrl;
-        const isHls = firstUrl?.toLowerCase().includes('.m3u8');
-        
-        player.configure({
-          manifest: {
-            retryParameters: {
-              maxAttempts: 5,
-              baseDelay: 1000,
-              backoffFactor: 2,
-            },
-            hls: {
-              ignoreTextStreamFailures: true,
-            }
-          },
-          streaming: {
-            bufferingGoal: 30,
-            rebufferingGoal: 10,
-            bufferBehind: 30,
-            alwaysStreamText: true,
-          },
-          abr: {
-            enabled: true // Enable adaptive bitrate by default
-          }
-        });
-
-        // If we have multiple sources but they are separate HLS manifests (not a master manifest),
-        // Shaka works best if we load them as variants or just load the master.
-        // For your data, these look like separate manifests.
-        // To show multiple qualities in the menu for separate manifests, we should ideally have a master manifest.
-        // Since we have separate URLs, we'll load the one matching 'quality' state if it's set, 
-        // but we'll try to let Shaka manage it if possible.
-        
-        const selectedSource = sources.find((s: any) => s.quality === quality) || sources[0];
-        const videoUrl = selectedSource?.url || currentEpisode.sourceUrl;
-
-        if (!videoUrl) {
-          console.error("No video URL found");
-          return;
-        }
-
-        if (isHls) {
-          await player.load(videoUrl, null, 'application/x-mpegurl');
-        } else {
-          await player.load(videoUrl);
-        }
-
-        // Subtitles handling
-        if (currentEpisode.subtitles && currentEpisode.subtitles.length > 0) {
-          player.setTextTrackVisibility(true);
-
-          for (const sub of currentEpisode.subtitles) {
-            try {
-              // SRT needs application/x-subrip
-              await player.addTextTrackAsync(
-                sub.url,
-                sub.language.toLowerCase(),
-                'subtitles',
-                'application/x-subrip',
-                null,
-                sub.language === "ID" ? "Indonesian" : "English"
-              );
-            } catch (trackError: any) {
-              console.warn("Retrying subtitle load without explicit mime type", trackError);
-              try {
-                await player.addTextTrackAsync(
-                  sub.url,
-                  sub.language.toLowerCase(),
-                  'subtitles'
-                );
-              } catch (retryError) {
-                console.error("Failed to add text track", retryError);
-              }
-            }
-          }
-
-          // Auto-select language
-          setTimeout(() => {
-            const languages = player.getTextLanguages();
-            if (languages.includes('id')) {
-              player.selectTextLanguage('id');
-            } else if (languages.length > 0) {
-              player.selectTextLanguage(languages[0]);
-            }
-          }, 500);
-        }
-      } catch (e: any) {
-        console.error("Critical Shaka Load Error", e);
-        if (videoRef.current) {
-          const selectedSource = (currentEpisode.sources || []).find((s: any) => s.quality === quality) || (currentEpisode.sources || [])[0];
-          videoRef.current.src = selectedSource?.url || currentEpisode.sourceUrl;
-          videoRef.current.load();
-        }
-      }
-    };
-
-    initPlayer();
-
-    return () => {
-      if (playerRef.current) {
-        playerRef.current.destroy();
-      }
-    };
-  }, [currentEpisode, quality]);
-
-  // Manual redirect for old IDs if necessary, or just inform user
-  useEffect(() => {
-    if (loadingEpisode === false && !currentEpisode && vId === 4 && eId === 1) {
-      setLocation("/watch/8/2");
-    }
-  }, [currentEpisode, loadingEpisode, vId, eId, setLocation]);
+    setHasWindow(true);
+  }, []);
 
   const sortedEpisodes = allEpisodes?.sort((a, b) => a.episodeNumber - b.episodeNumber);
   const currentIndex = sortedEpisodes?.findIndex(e => e.id === eId) ?? -1;
@@ -249,7 +75,7 @@ export default function WatchPage() {
           video.currentTime = Math.max(0, video.currentTime - 10);
           break;
         case "l":
-          video.currentTime = Math.max(0, video.currentTime + 10);
+          video.currentTime = Math.min(video.duration, video.currentTime + 10);
           break;
         case "m":
           video.muted = !video.muted;
@@ -273,6 +99,125 @@ export default function WatchPage() {
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [nextEpisode, vId, setLocation]);
+
+  // Manual quality switch effect
+  useEffect(() => {
+    if (!shakaPlayerRef.current || !currentEpisode) return;
+    
+    const switchSource = async () => {
+      const sources = currentEpisode.sources || [];
+      const selectedSource = sources.find((s: any) => s.quality === quality) || sources[0];
+      const videoUrl = selectedSource?.url || currentEpisode.sourceUrl;
+      
+      if (videoUrl) {
+        try {
+          const currentTime = videoRef.current?.currentTime || 0;
+          const isPaused = videoRef.current?.paused;
+          
+          await shakaPlayerRef.current.load(videoUrl);
+          
+          if (videoRef.current) {
+            videoRef.current.currentTime = currentTime;
+            if (!isPaused) videoRef.current.play();
+          }
+        } catch (e) {
+          console.error("Error switching quality", e);
+        }
+      }
+    };
+
+    switchSource();
+  }, [quality]);
+
+  // Initialize Shaka Player
+  useEffect(() => {
+    if (!currentEpisode || !videoRef.current || !videoContainerRef.current) return;
+
+    const initPlayer = async () => {
+      if (!videoRef.current || !videoContainerRef.current) return;
+
+      // @ts-ignore
+      shaka.polyfill.installAll();
+      // @ts-ignore
+      if (!shaka.Player.isBrowserSupported()) {
+        console.error("Browser not supported!");
+        return;
+      }
+
+      // @ts-ignore
+      const player = new shaka.Player();
+      await player.attach(videoRef.current);
+      playerRef.current = player;
+      shakaPlayerRef.current = player;
+
+      player.addEventListener('timeupdate', () => {
+        if (videoRef.current) {
+          handleProgress();
+        }
+      });
+
+      // @ts-ignore
+      const ui = new shaka.ui.Overlay(
+        player,
+        videoContainerRef.current,
+        videoRef.current
+      );
+
+      const uiConfig = {
+        'controlPanelElements': [
+          'play_pause', 'time_and_duration', 'spacer', 'mute', 'volume', 
+          'quality', 'captions', 'playback_rate', 'fullscreen', 'overflow_menu'
+        ],
+        'overflowMenuButtons': ['language', 'playback_rate', 'captions', 'quality'],
+      };
+      ui.configure(uiConfig);
+
+      player.addEventListener("error", (event: any) => {
+        console.error("Shaka Player Error", event.detail.code, event.detail);
+      });
+
+      try {
+        const sources = currentEpisode.sources || [];
+        const firstUrl = sources[0]?.url || currentEpisode.sourceUrl;
+        const isHls = firstUrl?.toLowerCase().includes('.m3u8');
+        
+        player.configure({
+          manifest: { retryParameters: { maxAttempts: 5, baseDelay: 1000, backoffFactor: 2 }, hls: { ignoreTextStreamFailures: true } },
+          streaming: { bufferingGoal: 30, rebufferingGoal: 10, bufferBehind: 30, alwaysStreamText: true },
+          abr: { enabled: true }
+        });
+
+        const selectedSource = sources.find((s: any) => s.quality === quality) || sources[0];
+        const videoUrl = selectedSource?.url || currentEpisode.sourceUrl;
+
+        if (videoUrl) {
+          if (isHls) await player.load(videoUrl, null, 'application/x-mpegurl');
+          else await player.load(videoUrl);
+        }
+
+        if (currentEpisode.subtitles?.length) {
+          player.setTextTrackVisibility(true);
+          for (const sub of currentEpisode.subtitles) {
+            try {
+              await player.addTextTrackAsync(sub.url, sub.language.toLowerCase(), 'subtitles', 'application/x-subrip', null, sub.language === "ID" ? "Indonesian" : "English");
+            } catch {
+              try { await player.addTextTrackAsync(sub.url, sub.language.toLowerCase(), 'subtitles'); } catch (e) { console.error("Sub error", e); }
+            }
+          }
+          setTimeout(() => {
+            const langs = player.getTextLanguages();
+            if (langs.includes('id')) player.selectTextLanguage('id');
+            else if (langs.length) player.selectTextLanguage(langs[0]);
+          }, 500);
+        }
+      } catch (e) {
+        console.error("Load error", e);
+      }
+    };
+
+    initPlayer();
+    return () => { if (playerRef.current) playerRef.current.destroy(); };
+  }, [currentEpisode]);
 
   const handleProgress = useCallback(() => {
     const video = videoRef.current;
