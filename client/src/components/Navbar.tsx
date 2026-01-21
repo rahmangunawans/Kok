@@ -1,6 +1,6 @@
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
-import { Search, User as UserIcon, LogOut, MonitorPlay, Crown, Check, X } from "lucide-react";
+import { Search, User as UserIcon, LogOut, MonitorPlay, Crown, Check, X, ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -74,6 +74,15 @@ export function Navbar() {
   ];
 
   const [selectedPlan, setSelectedPlan] = useState(vipPlans[0]);
+  const scrollRef = React.useRef<HTMLDivElement>(null);
+
+  const scroll = (direction: 'left' | 'right') => {
+    if (scrollRef.current) {
+      const { scrollLeft, clientWidth } = scrollRef.current;
+      const scrollTo = direction === 'left' ? scrollLeft - 150 : scrollLeft + 150;
+      scrollRef.current.scrollTo({ left: scrollTo, behavior: 'smooth' });
+    }
+  };
 
   return (
     <>
@@ -328,40 +337,59 @@ export function Navbar() {
           </div>
 
           <div className="flex-1 overflow-hidden flex flex-col min-h-[220px]">
-            <div className="flex-1 overflow-x-auto no-scrollbar py-4 px-5">
-              <div className="flex gap-3 min-w-max pb-2">
-                {vipPlans.map((plan) => (
-                  <div 
-                    key={plan.id}
-                    onClick={() => setSelectedPlan(plan)}
-                    className={`relative w-[140px] p-4 rounded-xl border transition-all cursor-pointer flex flex-col justify-between shrink-0 ${selectedPlan.id === plan.id ? 'border-[#d0992e] bg-[#d0992e]/10 shadow-[0_0_15px_rgba(208,153,46,0.05)]' : 'border-white/5 bg-white/5 hover:border-white/10'}`}
-                  >
-                    <div className="space-y-1.5">
-                      <div className="flex justify-between items-start">
-                        <span className="font-bold text-white text-[11px] leading-tight line-clamp-1">{plan.name.replace(' Subscription', '')}</span>
+            <div className="relative group/scroll">
+              <div 
+                ref={scrollRef}
+                className="flex-1 overflow-x-auto no-scrollbar py-4 px-5 scroll-smooth"
+              >
+                <div className="flex gap-3 min-w-max pb-2">
+                  {vipPlans.map((plan) => (
+                    <div 
+                      key={plan.id}
+                      onClick={() => setSelectedPlan(plan)}
+                      className={`relative w-[140px] p-4 rounded-xl border transition-all cursor-pointer flex flex-col justify-between shrink-0 ${selectedPlan.id === plan.id ? 'border-[#d0992e] bg-[#d0992e]/10 shadow-[0_0_15px_rgba(208,153,46,0.05)]' : 'border-white/5 bg-white/5 hover:border-white/10'}`}
+                    >
+                      <div className="space-y-1.5">
+                        <div className="flex justify-between items-start">
+                          <span className="font-bold text-white text-[11px] leading-tight line-clamp-1">{plan.name.replace(' Subscription', '')}</span>
+                        </div>
+                        {plan.discount && (
+                          <Badge className="bg-[#d0992e] text-black text-[8px] font-black border-0 rounded-md px-1.5 py-0 w-fit">
+                            {plan.discount}
+                          </Badge>
+                        )}
                       </div>
-                      {plan.discount && (
-                        <Badge className="bg-[#d0992e] text-black text-[8px] font-black border-0 rounded-md px-1.5 py-0 w-fit">
-                          {plan.discount}
-                        </Badge>
-                      )}
-                    </div>
-                    <div className="mt-4">
-                      <div className="flex flex-col">
-                        <span className="text-lg font-black text-[#d0992e] leading-none">{plan.price.replace('Rp', 'Rp ')}</span>
-                        <span className="text-[10px] text-gray-500 line-through mt-1">{plan.originalPrice}</span>
-                      </div>
-                    </div>
-                    {selectedPlan.id === plan.id && (
-                      <div className="absolute right-3 top-3">
-                        <div className="w-4 h-4 rounded-full bg-[#d0992e] flex items-center justify-center">
-                          <Check className="w-2.5 h-2.5 text-black stroke-[4]" />
+                      <div className="mt-4">
+                        <div className="flex flex-col">
+                          <span className="text-lg font-black text-[#d0992e] leading-none">{plan.price.replace('Rp', 'Rp ')}</span>
+                          <span className="text-[10px] text-gray-500 line-through mt-1">{plan.originalPrice}</span>
                         </div>
                       </div>
-                    )}
-                  </div>
-                ))}
+                      {selectedPlan.id === plan.id && (
+                        <div className="absolute right-3 top-3">
+                          <div className="w-4 h-4 rounded-full bg-[#d0992e] flex items-center justify-center">
+                            <Check className="w-2.5 h-2.5 text-black stroke-[4]" />
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
               </div>
+
+              {/* Scroll Buttons */}
+              <button 
+                onClick={() => scroll('left')}
+                className="absolute left-1 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-black/60 border border-white/10 text-white flex items-center justify-center opacity-0 group-hover/scroll:opacity-100 transition-opacity hover:bg-black/80 z-10"
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </button>
+              <button 
+                onClick={() => scroll('right')}
+                className="absolute right-1 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-black/60 border border-white/10 text-white flex items-center justify-center opacity-0 group-hover/scroll:opacity-100 transition-opacity hover:bg-black/80 z-10"
+              >
+                <ChevronRight className="w-4 h-4" />
+              </button>
             </div>
 
             <div className="px-5 pb-4">
