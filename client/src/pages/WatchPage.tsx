@@ -113,8 +113,39 @@ export default function WatchPage() {
         try {
           const currentTime = videoRef.current?.currentTime || 0;
           const isPaused = videoRef.current?.paused;
+          const player = shakaPlayerRef.current;
           
-          await shakaPlayerRef.current.load(videoUrl);
+          await player.load(videoUrl);
+          
+          // Re-add subtitles after loading new quality source
+          if (currentEpisode.subtitles?.length) {
+            for (const sub of currentEpisode.subtitles) {
+              try {
+                await player.addTextTrackAsync(
+                  sub.url, 
+                  sub.language.toLowerCase(), 
+                  'subtitles', 
+                  'application/x-subrip', 
+                  null, 
+                  sub.language === "ID" ? "Indonesian" : "English"
+                );
+              } catch (e) {
+                try {
+                  await player.addTextTrackAsync(sub.url, sub.language.toLowerCase(), 'subtitles');
+                } catch (retryErr) {
+                  console.error("Failed to re-add subtitle after quality switch", retryErr);
+                }
+              }
+            }
+            
+            // Re-apply language selection and visibility
+            player.setTextTrackVisibility(true);
+            setTimeout(() => {
+              const langs = player.getTextLanguages();
+              if (langs.includes('id')) player.selectTextLanguage('id');
+              else if (langs.length) player.selectTextLanguage(langs[0]);
+            }, 100);
+          }
           
           if (videoRef.current) {
             videoRef.current.currentTime = currentTime;
