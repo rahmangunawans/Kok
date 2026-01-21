@@ -33,7 +33,11 @@ export default function WatchPage() {
 
   const [hasWindow, setHasWindow] = useState(false);
   const [quality, setQuality] = useState("1080p");
-  const sources = currentEpisode?.sources || [];
+  const sourcesData = currentEpisode?.sources || [];
+  
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const videoContainerRef = useRef<HTMLDivElement>(null);
+  const playerRef = useRef<any>(null);
   const shakaPlayerRef = useRef<any>(null);
 
   // Initialize Shaka Player
@@ -308,8 +312,6 @@ export default function WatchPage() {
       </div>
     );
   }
-
-  if (!currentEpisode) return <div>Episode not found</div>;
 
   const sourcesData = currentEpisode.sources && currentEpisode.sources.length > 0 
     ? currentEpisode.sources 
