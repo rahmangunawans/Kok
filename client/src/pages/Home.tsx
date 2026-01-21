@@ -145,7 +145,7 @@ export default function Home() {
             <DialogTitle>{authMode === "login" ? "Login to YOUKU" : "Sign up for YOUKU"}</DialogTitle>
           </VisuallyHidden>
           
-          <div className="relative w-full sm:aspect-[850/500] bg-[#121214] text-white flex flex-col sm:flex-row rounded-2xl overflow-hidden">
+          <div className="relative w-full sm:h-[500px] bg-[#121214] text-white flex flex-col sm:flex-row rounded-2xl overflow-hidden">
             {/* Modal Close Button - Custom Styled */}
             <button 
               onClick={() => setShowAuthModal(false)}
@@ -156,8 +156,8 @@ export default function Home() {
             </button>
 
             {/* Left Side: Form */}
-            <div className="flex-1 p-8 sm:p-12 flex flex-col justify-center min-h-[450px] sm:min-h-0 pt-14 sm:pt-12">
-              <div className="mb-8 sm:mb-10 text-center">
+            <div className="flex-1 p-8 sm:p-12 flex flex-col justify-start sm:justify-center pt-16 sm:pt-12">
+              <div className="mb-6 sm:mb-10 text-center">
                 <h2 className="text-2xl sm:text-3xl font-display font-black tracking-tight mb-2">
                   {authMode === "login" ? "Welcome Back" : "Join YOUKU"}
                 </h2>
@@ -319,7 +319,7 @@ export default function Home() {
             </div>
 
             {/* Right Side: QR Code (Visible on Desktop only) */}
-            <div className="hidden sm:flex flex-[0.8] bg-gradient-to-br from-[#1a1a1c] to-[#121214] flex-col items-center justify-center p-12 border-l border-white/5">
+            <div className="hidden sm:flex flex-[0.8] bg-gradient-to-br from-[#1a1a1c] to-[#121214] flex-col items-center justify-center p-12 border-l border-white/5 min-h-[500px]">
               <div className="text-center mb-10">
                 <h3 className="text-sm font-bold uppercase tracking-widest text-gray-500 mb-2">QR Code Login</h3>
                 <p className="text-xs text-gray-600">Scan to log in instantly</p>
