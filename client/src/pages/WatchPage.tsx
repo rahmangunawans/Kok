@@ -229,8 +229,25 @@ export default function WatchPage() {
         });
 
         if (manifestUrl) {
-          if (isHls) await player.load(manifestUrl, null, 'application/x-mpegurl');
-          else await player.load(manifestUrl);
+          try {
+            if (isHls) {
+              await player.load(manifestUrl, null, 'application/x-mpegurl');
+            } else {
+              await player.load(manifestUrl);
+            }
+            
+            // Auto-play after load
+            if (videoRef.current) {
+              videoRef.current.play().catch(e => console.error("Auto-play blocked", e));
+            }
+          } catch (loadErr) {
+            console.error("Shaka load error, trying fallback", loadErr);
+            // Fallback to sources if manifest fails
+            if (sources.length > 0) {
+              await player.load(sources[0].url);
+              if (videoRef.current) videoRef.current.play().catch(() => {});
+            }
+          }
         }
 
         if (currentEpisode.subtitles?.length) {
