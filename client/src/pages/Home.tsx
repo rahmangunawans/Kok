@@ -146,12 +146,12 @@ export default function Home() {
 
       {/* Modern Auth Modal - Updated Styling */}
       <Dialog open={showAuthModal} onOpenChange={setShowAuthModal}>
-        <DialogContent className="max-w-[95vw] sm:max-w-[850px] p-0 overflow-hidden border-white/5 bg-[#121214] shadow-2xl [&>button]:hidden">
+        <DialogContent className="max-w-[95vw] sm:max-w-[700px] p-0 overflow-hidden border-white/5 bg-[#121214] shadow-2xl [&>button]:hidden">
           <VisuallyHidden>
             <DialogTitle>{authMode === "login" ? "Login to YOUKU" : "Sign up for YOUKU"}</DialogTitle>
           </VisuallyHidden>
           
-          <div className="relative w-full sm:min-h-[550px] bg-[#121214] text-white flex flex-col sm:flex-row rounded-2xl overflow-hidden">
+          <div className="relative w-full sm:min-h-[450px] bg-[#121214] text-white flex flex-col sm:flex-row rounded-2xl overflow-hidden">
             {/* Modal Close Button - Custom Styled */}
             <button 
               onClick={() => setShowAuthModal(false)}
@@ -162,34 +162,32 @@ export default function Home() {
             </button>
 
             {/* Left Side: Form */}
-            <div className="flex-1 p-8 sm:p-12 flex flex-col justify-center min-h-[500px] sm:min-h-0 pt-16 sm:pt-12">
-              <div className="mb-8 sm:mb-12 text-center">
-                <h2 className="text-2xl sm:text-4xl font-display font-black tracking-tight mb-2 leading-tight">
+            <div className="flex-1 p-6 sm:p-10 flex flex-col justify-center min-h-[400px] sm:min-h-0 pt-16 sm:pt-10">
+              <div className="mb-6 sm:mb-8 text-center">
+                <h2 className="text-xl sm:text-3xl font-display font-black tracking-tight mb-2 leading-tight">
                   {authMode === "login" ? "Welcome Back" : "Join YOUKU"}
                 </h2>
-                <p className="text-sm sm:text-base text-gray-500 font-medium">
-                  {authMode === "login" ? "Log in to your account to continue" : "Create an account to start watching"}
+                <p className="text-xs sm:text-sm text-gray-500 font-medium">
+                  {authMode === "login" ? "Log in to your account" : "Create an account to start watching"}
                 </p>
               </div>
               
-              <div className="space-y-4 sm:space-y-8">
+              <div className="space-y-4">
                 {authMode === "login" ? (
                   <Form {...loginForm} key="login-form">
-                    <form onSubmit={loginForm.handleSubmit(onLoginSubmit)} className="space-y-4 sm:space-y-8">
-                      <div className="space-y-3 sm:space-y-5">
+                    <form onSubmit={loginForm.handleSubmit(onLoginSubmit)} className="space-y-4">
+                      <div className="space-y-3">
                         <FormField
                           control={loginForm.control}
                           name="username"
                           render={({ field }) => (
                             <FormItem>
                               <FormControl>
-                                <div className="relative group">
-                                  <Input 
-                                    placeholder="Username" 
-                                    {...field} 
-                                    className="bg-[#1a1a1c] border-white/10 rounded-xl h-12 sm:h-14 px-5 focus-visible:ring-primary/40 focus-visible:border-primary transition-none placeholder:text-gray-500 text-base text-white outline-none" 
-                                  />
-                                </div>
+                                <Input 
+                                  placeholder="Username" 
+                                  {...field} 
+                                  className="bg-[#1a1a1c] border-white/10 rounded-xl h-11 sm:h-12 px-4 focus-visible:ring-primary/40 focus-visible:border-primary transition-none placeholder:text-gray-500 text-sm text-white outline-none" 
+                                />
                               </FormControl>
                               <FormMessage />
                             </FormItem>
@@ -201,14 +199,12 @@ export default function Home() {
                           render={({ field }) => (
                             <FormItem>
                               <FormControl>
-                                <div className="relative group">
-                                  <Input 
-                                    type="password" 
-                                    placeholder="Password" 
-                                    {...field} 
-                                    className="bg-[#1a1a1c] border-white/10 rounded-xl h-12 sm:h-14 px-5 focus-visible:ring-primary/40 focus-visible:border-primary transition-none placeholder:text-gray-500 text-base text-white outline-none" 
-                                  />
-                                </div>
+                                <Input 
+                                  type="password" 
+                                  placeholder="Password" 
+                                  {...field} 
+                                  className="bg-[#1a1a1c] border-white/10 rounded-xl h-11 sm:h-12 px-4 focus-visible:ring-primary/40 focus-visible:border-primary transition-none placeholder:text-gray-500 text-sm text-white outline-none" 
+                                />
                               </FormControl>
                               <FormMessage />
                             </FormItem>
@@ -217,15 +213,15 @@ export default function Home() {
                       </div>
                       
                       <div className="flex justify-end">
-                        <button type="button" className="text-xs sm:text-sm text-primary/80 hover:text-primary transition-colors font-medium">Forgot password?</button>
+                        <button type="button" className="text-xs text-primary/80 hover:text-primary transition-colors font-medium">Forgot password?</button>
                       </div>
                       
-                      <div className="space-y-3 sm:space-y-4">
-                        <Button type="submit" className="w-full bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl h-12 sm:h-14 font-bold text-base sm:text-lg shadow-lg shadow-primary/20 transition-all active:scale-[0.98]" disabled={isLoggingIn}>
+                      <div className="space-y-3">
+                        <Button type="submit" className="w-full bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl h-11 sm:h-12 font-bold text-sm shadow-lg shadow-primary/20 transition-all active:scale-[0.98]" disabled={isLoggingIn}>
                           {isLoggingIn && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                           Log In
                         </Button>
-                        <p className="text-center text-sm sm:text-base text-gray-500">
+                        <p className="text-center text-xs text-gray-500">
                           Don't have an account?{' '}
                           <button 
                             type="button"
@@ -240,8 +236,8 @@ export default function Home() {
                   </Form>
                 ) : (
                   <Form {...registerForm} key="register-form">
-                    <form onSubmit={registerForm.handleSubmit(onRegisterSubmit)} className="space-y-4 sm:space-y-8">
-                      <div className="space-y-3 sm:space-y-5">
+                    <form onSubmit={registerForm.handleSubmit(onRegisterSubmit)} className="space-y-4">
+                      <div className="space-y-3">
                         <FormField
                           control={registerForm.control}
                           name="username"
@@ -251,7 +247,7 @@ export default function Home() {
                                 <Input 
                                   placeholder="Username" 
                                   {...field} 
-                                  className="bg-[#1a1a1c] border-white/10 rounded-xl h-12 sm:h-14 px-5 focus-visible:ring-primary/40 focus-visible:border-primary transition-none placeholder:text-gray-500 text-base text-white outline-none" 
+                                  className="bg-[#1a1a1c] border-white/10 rounded-xl h-11 sm:h-12 px-4 focus-visible:ring-primary/40 focus-visible:border-primary transition-none placeholder:text-gray-500 text-sm text-white outline-none" 
                                 />
                               </FormControl>
                               <FormMessage />
@@ -268,7 +264,7 @@ export default function Home() {
                                   type="password" 
                                   placeholder="Password (min 6 chars)" 
                                   {...field} 
-                                  className="bg-[#1a1a1c] border-white/10 rounded-xl h-12 sm:h-14 px-5 focus-visible:ring-primary/40 focus-visible:border-primary transition-none placeholder:text-gray-500 text-base text-white outline-none" 
+                                  className="bg-[#1a1a1c] border-white/10 rounded-xl h-11 sm:h-12 px-4 focus-visible:ring-primary/40 focus-visible:border-primary transition-none placeholder:text-gray-500 text-sm text-white outline-none" 
                                 />
                               </FormControl>
                               <FormMessage />
@@ -277,12 +273,12 @@ export default function Home() {
                         />
                       </div>
                       
-                      <div className="space-y-3 sm:space-y-4">
-                        <Button type="submit" className="w-full bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl h-12 sm:h-14 font-bold text-base sm:text-lg shadow-lg shadow-primary/20 transition-all active:scale-[0.98]" disabled={isRegistering}>
+                      <div className="space-y-3">
+                        <Button type="submit" className="w-full bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl h-11 sm:h-12 font-bold text-sm shadow-lg shadow-primary/20 transition-all active:scale-[0.98]" disabled={isRegistering}>
                           {isRegistering && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                           Create Account
                         </Button>
-                        <p className="text-center text-sm sm:text-base text-gray-500">
+                        <p className="text-center text-xs text-gray-500">
                           Already have an account?{' '}
                           <button 
                             type="button"
@@ -297,58 +293,55 @@ export default function Home() {
                   </Form>
                 )}
 
-                <div className="pt-4 sm:pt-8">
-                  <div className="relative mb-4 sm:mb-8">
+                <div className="pt-4">
+                  <div className="relative mb-4">
                     <div className="absolute inset-0 flex items-center">
                       <div className="w-full border-t border-white/5"></div>
                     </div>
-                    <div className="relative flex justify-center text-[10px] sm:text-[12px] uppercase tracking-widest font-bold">
-                      <span className="bg-[#121214] px-4 text-gray-600">Or continue with</span>
+                    <div className="relative flex justify-center text-[10px] uppercase tracking-widest font-bold">
+                      <span className="bg-[#121214] px-4 text-gray-600">Or</span>
                     </div>
                   </div>
-                  <div className="flex gap-4">
-                    <Button variant="outline" className="flex-1 border-white/5 bg-white/5 hover:bg-white/10 rounded-xl h-12 transition-all active:scale-[0.98]">
-                      <SiFacebook className="mr-2 h-5 w-5 text-[#1877F2]" />
-                      <span className="text-xs sm:text-sm font-bold">Facebook</span>
+                  <div className="flex gap-3">
+                    <Button variant="outline" className="flex-1 border-white/5 bg-white/5 hover:bg-white/10 rounded-xl h-11 transition-all active:scale-[0.98]">
+                      <SiFacebook className="mr-2 h-4 w-4 text-[#1877F2]" />
+                      <span className="text-xs font-bold">Facebook</span>
                     </Button>
-                    <Button variant="outline" className="flex-1 border-white/5 bg-white/5 hover:bg-white/10 rounded-xl h-12 transition-all active:scale-[0.98]">
-                      <SiGoogle className="mr-2 h-5 w-5 text-[#EA4335]" />
-                      <span className="text-xs sm:text-sm font-bold">Google</span>
+                    <Button variant="outline" className="flex-1 border-white/5 bg-white/5 hover:bg-white/10 rounded-xl h-11 transition-all active:scale-[0.98]">
+                      <SiGoogle className="mr-2 h-4 w-4 text-[#EA4335]" />
+                      <span className="text-xs font-bold">Google</span>
                     </Button>
                   </div>
                 </div>
               </div>
               
-              <p className="mt-8 sm:mt-12 text-[10px] sm:text-[12px] text-gray-600 text-center leading-relaxed">
-                By joining, you agree to our <span className="text-gray-400 hover:text-primary transition-colors cursor-pointer underline underline-offset-2">Terms of Use</span> & <span className="text-gray-400 hover:text-primary transition-colors cursor-pointer underline underline-offset-2">Privacy Policy</span>
+              <p className="mt-6 sm:mt-8 text-[10px] text-gray-600 text-center leading-relaxed">
+                By joining, you agree to our <span className="text-gray-400 hover:text-primary transition-colors cursor-pointer underline underline-offset-2">Terms</span> & <span className="text-gray-400 hover:text-primary transition-colors cursor-pointer underline underline-offset-2">Privacy</span>
               </p>
             </div>
 
             {/* Right Side: QR Code (Visible on Desktop only) */}
-            <div className="hidden sm:flex flex-[0.8] bg-gradient-to-br from-[#1a1a1c] to-[#121214] flex-col items-center justify-center p-12 border-l border-white/5 min-h-[550px]">
-              <div className="text-center mb-10">
-                <h3 className="text-sm font-bold uppercase tracking-widest text-gray-500 mb-2">QR Code Login</h3>
-                <p className="text-xs text-gray-600">Scan to log in instantly</p>
+            <div className="hidden sm:flex flex-[0.7] bg-gradient-to-br from-[#1a1a1c] to-[#121214] flex-col items-center justify-center p-8 border-l border-white/5 min-h-[450px]">
+              <div className="text-center mb-6">
+                <h3 className="text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-1">QR Login</h3>
+                <p className="text-[9px] text-gray-600">Scan to log in</p>
               </div>
               
               <div className="relative group">
                 <div className="absolute -inset-1 bg-gradient-to-r from-primary/20 to-accent/20 rounded-2xl blur opacity-75 group-hover:opacity-100 transition duration-1000 group-hover:duration-200"></div>
-                <div className="relative bg-white p-4 rounded-xl shadow-2xl transition-transform duration-500 group-hover:scale-[1.02]">
+                <div className="relative bg-white p-3 rounded-xl shadow-2xl transition-transform duration-500 group-hover:scale-[1.02]">
                   <img 
-                    src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=YOUKU_AUTH_PLACEHOLDER" 
+                    src="https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=YOUKU_AUTH_PLACEHOLDER" 
                     alt="QR Code" 
-                    className="w-32 h-32 lg:w-40 lg:h-40"
+                    className="w-24 h-24"
                   />
                 </div>
               </div>
               
-              <div className="mt-10 flex flex-col items-center gap-3">
-                <div className="flex items-center gap-2 px-4 py-2 bg-white/5 rounded-full border border-white/5">
-                  <span className="text-[10px] text-gray-400">Open <span className="text-primary font-black italic">YOUKU</span> App</span>
+              <div className="mt-6 flex flex-col items-center gap-2">
+                <div className="flex items-center gap-2 px-3 py-1.5 bg-white/5 rounded-full border border-white/5">
+                  <span className="text-[9px] text-gray-400">Open <span className="text-primary font-black italic">YOUKU</span> App</span>
                 </div>
-                <p className="text-[10px] text-gray-600 max-w-[180px] text-center leading-normal">
-                  Available on iOS and Android. Scan the code to sync your account.
-                </p>
               </div>
             </div>
           </div>
