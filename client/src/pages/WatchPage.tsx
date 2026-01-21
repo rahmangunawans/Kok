@@ -215,17 +215,30 @@ export default function WatchPage() {
           video.currentTime = Math.max(0, video.currentTime - 10);
           break;
         case "l":
-          video.currentTime = Math.min(video.duration, video.currentTime + 10);
+          video.currentTime = Math.max(0, video.currentTime + 10);
           break;
         case "m":
           video.muted = !video.muted;
+          break;
+        case "c":
+          // Toggle captions
+          if (playerRef.current) {
+            const isVisible = playerRef.current.isTextTrackVisible();
+            playerRef.current.setTextTrackVisibility(!isVisible);
+          }
+          break;
+        case "n":
+          // Next episode shortcut
+          if (nextEpisode) {
+            setLocation(`/watch/${vId}/${nextEpisode.id}`);
+          }
           break;
       }
     };
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, []);
+  }, [nextEpisode, vId, setLocation]);
 
   const sortedEpisodes = allEpisodes?.sort((a, b) => a.episodeNumber - b.episodeNumber);
   const currentIndex = sortedEpisodes?.findIndex(e => e.id === eId) ?? -1;
