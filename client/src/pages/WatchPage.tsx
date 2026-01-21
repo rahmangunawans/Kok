@@ -1,11 +1,10 @@
 import { useState, useRef, useEffect } from "react";
 import { useParams, Link } from "wouter";
-import { useVideo, useEpisode, useEpisodes, useUpdateHistory } from "@/hooks/use-videos";
+import { useVideo, useEpisode, useEpisodes, useUpdateHistory, useVideos } from "@/hooks/use-videos";
 import ReactPlayer from "react-player";
-import { Loader2, ChevronLeft, ChevronRight, List } from "lucide-react";
+import { Loader2, ChevronLeft, ChevronRight, List, Star, Play } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/use-auth";
 
@@ -17,6 +16,7 @@ export default function WatchPage() {
   const { data: video } = useVideo(vId);
   const { data: currentEpisode, isLoading: loadingEpisode } = useEpisode(eId);
   const { data: allEpisodes } = useEpisodes(vId);
+  const { data: relatedVideos } = useVideos({ category: video?.categoryId?.toString() });
   const { user } = useAuth();
   const { mutate: updateHistory } = useUpdateHistory();
 
@@ -77,7 +77,7 @@ export default function WatchPage() {
           config={{
             file: {
               attributes: {
-                crossOrigin: "anonymous", // Needed for subtitles usually
+                crossOrigin: "anonymous", 
               },
               tracks: currentEpisode.subtitles?.map(sub => ({
                 kind: 'subtitles',
@@ -104,8 +104,8 @@ export default function WatchPage() {
       </div>
 
       {/* Info & Playlist Bar */}
-      <div className="flex-1 bg-background border-t border-white/10">
-        <div className="container mx-auto px-4 py-6 flex flex-col md:flex-row gap-8">
+      <div className="flex-1 bg-background border-t border-white/10 pb-20">
+        <div className="container mx-auto px-4 py-6 flex flex-col lg:flex-row gap-8">
           
           <div className="flex-1 space-y-4">
             <h1 className="text-2xl md:text-3xl font-display font-bold">
@@ -129,14 +129,62 @@ export default function WatchPage() {
                 Next Episode <ChevronRight className="ml-2 h-4 w-4" />
               </Button>
             </div>
+
+            <div className="pt-6">
+              <p className="text-muted-foreground leading-relaxed max-w-3xl">
+                {video?.description}
+              </p>
+            </div>
+
+            {/* Recommendations Section */}
+            <div className="pt-10 space-y-6">
+              <div className="flex items-center justify-between">
+                <h3 className="text-xl font-display font-bold">Recommended for You</h3>
+                <Link href={`/category/${video?.categoryId}`}>
+                  <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-primary">
+                    See More <ChevronRight className="ml-1 h-4 w-4" />
+                  </Button>
+                </Link>
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                {relatedVideos?.filter(v => v.id !== vId).slice(0, 4).map((v) => (
+                  <Link key={v.id} href={`/video/${v.id}`}>
+                    <div className="group cursor-pointer space-y-2">
+                      <div className="relative aspect-[3/4] rounded-xl overflow-hidden border border-white/5">
+                        <img 
+                          src={v.posterUrl} 
+                          alt={v.title} 
+                          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" 
+                        />
+                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                          <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center shadow-lg shadow-primary/20 scale-75 group-hover:scale-100 transition-transform">
+                            <Play className="w-5 h-5 text-primary-foreground fill-current" />
+                          </div>
+                        </div>
+                      </div>
+                      <h4 className="font-bold text-sm line-clamp-1 group-hover:text-primary transition-colors">
+                        {v.title}
+                      </h4>
+                      <div className="flex items-center justify-between text-[10px] text-muted-foreground">
+                        <span>{v.year}</span>
+                        <div className="flex items-center gap-1 text-accent">
+                          <Star className="w-3 h-3 fill-current" />
+                          {v.rating}
+                        </div>
+                      </div>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            </div>
           </div>
 
-          {/* Episode List Sidebar (Desktop) / Drawer (Mobile) */}
-          <div className="w-full md:w-[350px] shrink-0">
-            <div className="bg-card rounded-xl border border-white/5 overflow-hidden flex flex-col h-[400px]">
+          {/* Episode List Sidebar */}
+          <div className="w-full lg:w-[350px] shrink-0">
+            <div className="bg-card rounded-xl border border-white/5 overflow-hidden flex flex-col h-[500px] sticky top-24">
               <div className="p-4 border-b border-white/5 flex items-center justify-between bg-muted/20">
                 <h3 className="font-bold flex items-center gap-2">
-                  <List className="w-4 h-4" /> Episodes
+                  <List className="w-4 h-4 text-primary" /> Episodes
                 </h3>
                 <span className="text-xs text-muted-foreground">{sortedEpisodes?.length} total</span>
               </div>
@@ -146,11 +194,11 @@ export default function WatchPage() {
                     <Link key={ep.id} href={`/watch/${vId}/${ep.id}`}>
                       <div className={cn(
                         "flex items-center gap-3 p-3 rounded-lg hover:bg-white/5 transition-colors cursor-pointer group",
-                        ep.id === eId && "bg-primary/10 border border-primary/20"
+                        ep.id === eId ? "bg-primary/10 border border-primary/20" : "hover:bg-accent/5"
                       )}>
-                        <div className="relative w-24 aspect-video bg-black rounded overflow-hidden shrink-0">
+                        <div className="relative w-24 aspect-video bg-black rounded overflow-hidden shrink-0 border border-white/5">
                           {ep.thumbnailUrl && <img src={ep.thumbnailUrl} className="w-full h-full object-cover" />}
-                          <div className="absolute bottom-1 right-1 bg-black/80 text-[10px] px-1 rounded font-mono">
+                          <div className="absolute bottom-1 right-1 bg-black/80 text-[10px] px-1 rounded font-mono text-white">
                             Ep {ep.episodeNumber}
                           </div>
                         </div>
