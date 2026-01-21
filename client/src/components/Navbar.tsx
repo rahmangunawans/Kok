@@ -146,23 +146,23 @@ export function Navbar() {
 
           {/* User Menu / Auth Profile Icon */}
           <div className="flex items-center gap-2 shrink-0">
-            {/* VIP Button - On mobile, this will stay on the left if we reorder the elements */}
-            <Button 
-              onClick={() => setShowVipModal(true)}
-              className="flex bg-accent hover:bg-accent/90 text-accent-foreground font-bold gap-1 rounded-full px-4 md:px-6 h-9 md:h-10 order-1 md:order-none"
-            >
-              <Crown className="w-4 h-4" />
-              <span className="hidden xs:inline">VIP</span>
-            </Button>
-
             {/* Mobile Search Trigger */}
             <Button
               variant="ghost"
               size="icon"
-              className="md:hidden h-9 w-9 rounded-full order-2 md:order-none"
+              className="md:hidden h-9 w-9 rounded-full order-1 md:order-none"
               onClick={() => setShowSearch(!showSearch)}
             >
               {showSearch ? <X className="w-5 h-5" /> : <Search className="w-5 h-5" />}
+            </Button>
+
+            {/* VIP Button - Now positioned to the right of Search on mobile */}
+            <Button 
+              onClick={() => setShowVipModal(true)}
+              className="flex bg-accent hover:bg-accent/90 text-accent-foreground font-bold gap-1 rounded-full px-4 md:px-6 h-9 md:h-10 order-2 md:order-none"
+            >
+              <Crown className="w-4 h-4" />
+              <span className="hidden xs:inline">VIP</span>
             </Button>
 
             <div className="order-3 md:order-none">
