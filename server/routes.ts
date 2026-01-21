@@ -1,10 +1,12 @@
 import passport from "passport";
+import { type Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { api } from "@shared/routes";
 import { z } from "zod";
 import { setupAuth } from "./auth";
-import { insertVideoSchema, insertEpisodeSchema } from "@shared/schema";
+import { insertVideoSchema, insertEpisodeSchema, categories, videos, episodes } from "@shared/schema";
+import { db } from "./db";
 
 import { hashPassword } from "./auth";
 
@@ -160,12 +162,7 @@ async function seedData() {
       { name: "Documentary", slug: "documentary" }
     ];
     
-    // Need to insert categories manually since we don't have storage.createCategory exposed in IStorage
-    // We will use db directly for seeding to keep storage clean or add it.
-    // For now, let's use the db object imported in storage
-    const { db } = require("./db");
-    const { categories, videos, episodes } = require("@shared/schema");
-    
+    // Use db directly for seeding
     const insertedCats = await db.insert(categories).values(categoriesList).returning();
     
     // 2. Videos (Mock Data)
