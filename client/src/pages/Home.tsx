@@ -34,6 +34,12 @@ export default function Home() {
   const searchParams = new URLSearchParams(window.location.search);
   const searchTerm = searchParams.get("search");
 
+  const handleSwitchMode = (mode: "login" | "register") => {
+    setAuthMode(mode);
+    loginForm.reset();
+    registerForm.reset();
+  };
+
   useEffect(() => {
     if (user) {
       setShowAuthModal(false);
@@ -43,7 +49,7 @@ export default function Home() {
   useEffect(() => {
     const handleOpenAuth = () => {
       setShowAuthModal(true);
-      setAuthMode("login");
+      handleSwitchMode("login");
     };
     window.addEventListener('open-auth-modal', handleOpenAuth);
     return () => window.removeEventListener('open-auth-modal', handleOpenAuth);
@@ -168,7 +174,7 @@ export default function Home() {
               
               <div className="space-y-4 sm:space-y-8">
                 {authMode === "login" ? (
-                  <Form {...loginForm}>
+                  <Form {...loginForm} key="login-form">
                     <form onSubmit={loginForm.handleSubmit(onLoginSubmit)} className="space-y-4 sm:space-y-8">
                       <div className="space-y-3 sm:space-y-5">
                         <FormField
@@ -181,7 +187,7 @@ export default function Home() {
                                   <Input 
                                     placeholder="Username" 
                                     {...field} 
-                                    className="bg-white/5 border-white/10 rounded-xl h-12 sm:h-14 px-5 focus-visible:ring-primary/20 focus-visible:border-primary transition-all placeholder:text-gray-600 text-base" 
+                                    className="bg-[#1a1a1c] border-white/10 rounded-xl h-12 sm:h-14 px-5 focus-visible:ring-primary/40 focus-visible:border-primary transition-none placeholder:text-gray-500 text-base text-white outline-none" 
                                   />
                                 </div>
                               </FormControl>
@@ -200,7 +206,7 @@ export default function Home() {
                                     type="password" 
                                     placeholder="Password" 
                                     {...field} 
-                                    className="bg-white/5 border-white/10 rounded-xl h-12 sm:h-14 px-5 focus-visible:ring-primary/20 focus-visible:border-primary transition-all placeholder:text-gray-600 text-base" 
+                                    className="bg-[#1a1a1c] border-white/10 rounded-xl h-12 sm:h-14 px-5 focus-visible:ring-primary/40 focus-visible:border-primary transition-none placeholder:text-gray-500 text-base text-white outline-none" 
                                   />
                                 </div>
                               </FormControl>
@@ -224,7 +230,7 @@ export default function Home() {
                           <button 
                             type="button"
                             className="text-primary font-bold hover:underline"
-                            onClick={() => setAuthMode("register")}
+                            onClick={() => handleSwitchMode("register")}
                           >
                             Sign UP
                           </button>
@@ -233,7 +239,7 @@ export default function Home() {
                     </form>
                   </Form>
                 ) : (
-                  <Form {...registerForm}>
+                  <Form {...registerForm} key="register-form">
                     <form onSubmit={registerForm.handleSubmit(onRegisterSubmit)} className="space-y-4 sm:space-y-8">
                       <div className="space-y-3 sm:space-y-5">
                         <FormField
@@ -281,7 +287,7 @@ export default function Home() {
                           <button 
                             type="button"
                             className="text-primary font-bold hover:underline"
-                            onClick={() => setAuthMode("login")}
+                            onClick={() => handleSwitchMode("login")}
                           >
                             Log In
                           </button>
