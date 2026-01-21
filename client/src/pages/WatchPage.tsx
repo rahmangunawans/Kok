@@ -212,17 +212,37 @@ export default function WatchPage() {
     };
   }, [currentEpisode, quality]);
 
-  const sortedEpisodes = allEpisodes?.sort((a, b) => a.episodeNumber - b.episodeNumber);
-  const currentIndex = sortedEpisodes?.findIndex(e => e.id === eId) ?? -1;
-  const nextEpisode = currentIndex !== -1 && sortedEpisodes ? sortedEpisodes[currentIndex + 1] : null;
-  const prevEpisode = currentIndex !== -1 && sortedEpisodes ? sortedEpisodes[currentIndex - 1] : null;
+  // Quality Handling
+  const [quality, setQuality] = useState("1080p");
+  const sources = currentEpisode?.sources || [];
 
-  // Manual redirect for old IDs if necessary, or just inform user
+  // Manual source switching for Shaka (since we are using separate manifests)
   useEffect(() => {
-    if (loadingEpisode === false && !currentEpisode && vId === 4 && eId === 1) {
-      setLocation("/watch/8/2");
-    }
-  }, [currentEpisode, loadingEpisode, vId, eId, setLocation]);
+    if (!shakaPlayerRef.current || !currentEpisode) return;
+    
+    const switchSource = async () => {
+      const selectedSource = sources.find((s: any) => s.quality === quality) || sources[0];
+      const videoUrl = selectedSource?.url || currentEpisode.sourceUrl;
+      
+      if (videoUrl) {
+        try {
+          const currentTime = videoRef.current?.currentTime || 0;
+          const isPaused = videoRef.current?.paused;
+          
+          await shakaPlayerRef.current.load(videoUrl);
+          
+          if (videoRef.current) {
+            videoRef.current.currentTime = currentTime;
+            if (!isPaused) videoRef.current.play();
+          }
+        } catch (e) {
+          console.error("Error switching quality", e);
+        }
+      }
+    };
+
+    switchSource();
+  }, [quality]);
 
   // Keyboard Shortcuts
   useEffect(() => {
@@ -335,7 +355,27 @@ export default function WatchPage() {
           </Link>
         </div>
 
-        {/* Remove custom quality selection, using Shaka UI built-in instead */}
+        {/* Custom Quality Switcher (Overlaying Shaka) to handle separate manifests */}
+        <div className="absolute top-4 right-4 z-30 opacity-0 group-hover:opacity-100 transition-opacity">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button size="sm" variant="ghost" className="text-white hover:bg-white/10 backdrop-blur-sm h-8 px-3 text-xs font-bold">
+                <Settings className="h-3 w-3 mr-2" /> {quality.toUpperCase()}
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="bg-[#1a1a1c] border-white/10 text-white">
+              <DropdownMenuLabel>Quality</DropdownMenuLabel>
+              <DropdownMenuSeparator className="bg-white/5" />
+              <DropdownMenuRadioGroup value={quality} onValueChange={setQuality}>
+                {sources.map((s: any) => (
+                  <DropdownMenuRadioItem key={s.quality} value={s.quality} className="text-xs">
+                    {s.quality}
+                  </DropdownMenuRadioItem>
+                ))}
+              </DropdownMenuRadioGroup>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
 
         {/* Remove manually implemented controls to avoid duplication with Shaka UI */}
         <video
