@@ -32,7 +32,6 @@ export default function WatchPage() {
   const { mutate: updateHistory } = useUpdateHistory();
 
   const [hasWindow, setHasWindow] = useState(false);
-  const [quality, setQuality] = useState("1080p");
   
   const videoRef = useRef<HTMLVideoElement>(null);
   const videoContainerRef = useRef<HTMLDivElement>(null);
@@ -100,35 +99,6 @@ export default function WatchPage() {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [nextEpisode, vId, setLocation]);
 
-  // Manual quality switch effect
-  useEffect(() => {
-    if (!shakaPlayerRef.current || !currentEpisode) return;
-    
-    const switchSource = async () => {
-      const sources = currentEpisode.sources || [];
-      const selectedSource = sources.find((s: any) => s.quality === quality) || sources[0];
-      const videoUrl = selectedSource?.url || currentEpisode.sourceUrl;
-      
-      if (videoUrl) {
-        try {
-          const currentTime = videoRef.current?.currentTime || 0;
-          const isPaused = videoRef.current?.paused;
-          
-          await shakaPlayerRef.current.load(videoUrl);
-          
-          if (videoRef.current) {
-            videoRef.current.currentTime = currentTime;
-            if (!isPaused) videoRef.current.play();
-          }
-        } catch (e) {
-          console.error("Error switching quality", e);
-        }
-      }
-    };
-
-    switchSource();
-  }, [quality]);
-
   // Initialize Shaka Player
   useEffect(() => {
     if (!currentEpisode || !videoRef.current || !videoContainerRef.current) return;
@@ -178,8 +148,8 @@ export default function WatchPage() {
 
       try {
         const sources = currentEpisode.sources || [];
-        const firstUrl = sources[0]?.url || currentEpisode.sourceUrl;
-        const isHls = firstUrl?.toLowerCase().includes('.m3u8');
+        const manifestUrl = currentEpisode.sourceUrl || sources[0]?.url;
+        const isHls = manifestUrl?.toLowerCase().includes('.m3u8');
         
         player.configure({
           manifest: { retryParameters: { maxAttempts: 5, baseDelay: 1000, backoffFactor: 2 }, hls: { ignoreTextStreamFailures: true } },
@@ -187,12 +157,9 @@ export default function WatchPage() {
           abr: { enabled: true }
         });
 
-        const selectedSource = sources.find((s: any) => s.quality === quality) || sources[0];
-        const videoUrl = selectedSource?.url || currentEpisode.sourceUrl;
-
-        if (videoUrl) {
-          if (isHls) await player.load(videoUrl, null, 'application/x-mpegurl');
-          else await player.load(videoUrl);
+        if (manifestUrl) {
+          if (isHls) await player.load(manifestUrl, null, 'application/x-mpegurl');
+          else await player.load(manifestUrl);
         }
 
         if (currentEpisode.subtitles?.length) {
@@ -257,6 +224,8 @@ export default function WatchPage() {
     );
   }
 
+  if (!currentEpisode) return <div>Episode not found</div>;
+
   const sourcesData = currentEpisode.sources && currentEpisode.sources.length > 0 
     ? currentEpisode.sources 
     : [];
@@ -276,27 +245,7 @@ export default function WatchPage() {
           </Link>
         </div>
 
-        {/* Custom Quality Switcher (Overlaying Shaka) to handle separate manifests */}
-        <div className="absolute top-4 right-4 z-30 opacity-0 group-hover:opacity-100 transition-opacity">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button size="sm" variant="ghost" className="text-white hover:bg-white/10 backdrop-blur-sm h-8 px-3 text-xs font-bold">
-                <Settings className="h-3 w-3 mr-2" /> {quality.toUpperCase()}
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="bg-[#1a1a1c] border-white/10 text-white">
-              <DropdownMenuLabel>Quality</DropdownMenuLabel>
-              <DropdownMenuSeparator className="bg-white/5" />
-              <DropdownMenuRadioGroup value={quality} onValueChange={setQuality}>
-                {sourcesData.map((s: any) => (
-                  <DropdownMenuRadioItem key={s.quality} value={s.quality} className="text-xs">
-                    {s.quality}
-                  </DropdownMenuRadioItem>
-                ))}
-              </DropdownMenuRadioGroup>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
+        {/* Removed duplicate quality switcher - using Shaka Player SDK UI instead */}
 
         {/* Remove manually implemented controls to avoid duplication with Shaka UI */}
         <video
