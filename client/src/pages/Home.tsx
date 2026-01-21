@@ -138,14 +138,14 @@ export default function Home() {
         ))}
       </div>
 
-      {/* Auth Modal inspired by Screenshot */}
+      {/* Auth Modal inspired by Screenshot - Responsive Version */}
       <Dialog open={showAuthModal} onOpenChange={setShowAuthModal}>
-        <DialogContent className="max-w-[850px] p-0 overflow-hidden border-none bg-transparent">
+        <DialogContent className="max-w-[95vw] sm:max-w-[850px] p-0 overflow-hidden border-none bg-transparent">
           <VisuallyHidden>
             <DialogTitle>{authMode === "login" ? "Login to YOUKU" : "Sign up for YOUKU"}</DialogTitle>
           </VisuallyHidden>
           
-          <div className="relative w-full aspect-[850/500] bg-[#1a1b1e] text-white flex rounded-xl shadow-2xl overflow-hidden">
+          <div className="relative w-full min-h-[500px] sm:aspect-[850/500] bg-[#1a1b1e] text-white flex flex-col sm:flex-row rounded-xl shadow-2xl overflow-hidden">
             <button 
               onClick={() => setShowAuthModal(false)}
               className="absolute right-4 top-4 z-50 text-gray-400 hover:text-white transition-colors"
@@ -154,12 +154,12 @@ export default function Home() {
             </button>
 
             {/* Left Side: Form */}
-            <div className="flex-1 p-10 flex flex-col justify-center">
-              <h2 className="text-2xl font-bold mb-8 text-center">{authMode === "login" ? "Log in" : "Sign up"}</h2>
+            <div className="flex-1 p-6 sm:p-10 flex flex-col justify-center">
+              <h2 className="text-xl sm:text-2xl font-bold mb-6 sm:mb-8 text-center">{authMode === "login" ? "Log in" : "Sign up"}</h2>
               
               {authMode === "login" ? (
                 <Form {...loginForm}>
-                  <form onSubmit={loginForm.handleSubmit(onLoginSubmit)} className="space-y-5">
+                  <form onSubmit={loginForm.handleSubmit(onLoginSubmit)} className="space-y-4 sm:space-y-5">
                     <FormField
                       control={loginForm.control}
                       name="username"
@@ -194,16 +194,16 @@ export default function Home() {
                       )}
                     />
                     <div className="flex justify-start">
-                      <button type="button" className="text-xs text-pink-600 hover:underline">Forgot password</button>
+                      <button type="button" className="text-[10px] sm:text-xs text-pink-600 hover:underline">Forgot password</button>
                     </div>
-                    <Button type="submit" className="w-full bg-pink-600 hover:bg-pink-700 text-white rounded-full h-11 font-bold" disabled={isLoggingIn}>
+                    <Button type="submit" className="w-full bg-pink-600 hover:bg-pink-700 text-white rounded-full h-10 sm:h-11 font-bold" disabled={isLoggingIn}>
                       {isLoggingIn && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                       Log In
                     </Button>
                     <Button 
                       type="button" 
                       variant="outline" 
-                      className="w-full border-gray-700 bg-transparent text-gray-300 hover:bg-white/5 rounded-full h-11"
+                      className="w-full border-gray-700 bg-transparent text-gray-300 hover:bg-white/5 rounded-full h-10 sm:h-11"
                       onClick={() => setAuthMode("register")}
                     >
                       Sign UP
@@ -212,7 +212,7 @@ export default function Home() {
                 </Form>
               ) : (
                 <Form {...registerForm}>
-                  <form onSubmit={registerForm.handleSubmit(onRegisterSubmit)} className="space-y-5">
+                  <form onSubmit={registerForm.handleSubmit(onRegisterSubmit)} className="space-y-4 sm:space-y-5">
                     <FormField
                       control={registerForm.control}
                       name="username"
@@ -246,14 +246,14 @@ export default function Home() {
                         </FormItem>
                       )}
                     />
-                    <Button type="submit" className="w-full bg-pink-600 hover:bg-pink-700 text-white rounded-full h-11 font-bold" disabled={isRegistering}>
+                    <Button type="submit" className="w-full bg-pink-600 hover:bg-pink-700 text-white rounded-full h-10 sm:h-11 font-bold" disabled={isRegistering}>
                       {isRegistering && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                       Register
                     </Button>
                     <Button 
                       type="button" 
                       variant="outline" 
-                      className="w-full border-gray-700 bg-transparent text-gray-300 hover:bg-white/5 rounded-full h-11"
+                      className="w-full border-gray-700 bg-transparent text-gray-300 hover:bg-white/5 rounded-full h-10 sm:h-11"
                       onClick={() => setAuthMode("login")}
                     >
                       Back to Log In
@@ -262,7 +262,7 @@ export default function Home() {
                 </Form>
               )}
 
-              <div className="mt-10">
+              <div className="mt-8 sm:mt-10">
                 <div className="relative mb-6">
                   <div className="absolute inset-0 flex items-center">
                     <div className="w-full border-t border-gray-800"></div>
@@ -271,30 +271,30 @@ export default function Home() {
                     <span className="bg-[#1a1b1e] px-2 text-gray-500">Or log in with</span>
                   </div>
                 </div>
-                <div className="flex gap-4 justify-center">
-                  <Button variant="outline" className="flex-1 border-gray-700 bg-transparent hover:bg-white/5 rounded-full text-xs py-1 h-9">
-                    <SiFacebook className="mr-2 h-3.5 w-3.5 text-blue-500" />
+                <div className="flex gap-3 sm:gap-4 justify-center">
+                  <Button variant="outline" className="flex-1 border-gray-700 bg-transparent hover:bg-white/5 rounded-full text-[10px] sm:text-xs py-1 h-8 sm:h-9">
+                    <SiFacebook className="mr-1.5 sm:mr-2 h-3 sm:h-3.5 w-3 sm:w-3.5 text-blue-500" />
                     Facebook
                   </Button>
-                  <Button variant="outline" className="flex-1 border-gray-700 bg-transparent hover:bg-white/5 rounded-full text-xs py-1 h-9">
-                    <SiGoogle className="mr-2 h-3.5 w-3.5 text-red-500" />
+                  <Button variant="outline" className="flex-1 border-gray-700 bg-transparent hover:bg-white/5 rounded-full text-[10px] sm:text-xs py-1 h-8 sm:h-9">
+                    <SiGoogle className="mr-1.5 sm:mr-2 h-3 sm:h-3.5 w-3 sm:w-3.5 text-red-500" />
                     Google
                   </Button>
                 </div>
-                <p className="mt-6 text-[10px] text-gray-500 text-center">
+                <p className="mt-6 text-[9px] sm:text-[10px] text-gray-500 text-center">
                   By logging in, you agree to the <span className="text-gray-400">"Terms of Use"</span> & <span className="text-gray-400">"Privacy Policy"</span>
                 </p>
               </div>
             </div>
 
-            {/* Right Side: QR Code (Placeholder as per screenshot) */}
-            <div className="hidden md:flex flex-[0.8] bg-gradient-to-br from-[#2a2c31] to-[#1a1b1e] flex-col items-center justify-center p-10 border-l border-gray-800">
+            {/* Right Side: QR Code (Visible on Desktop only) */}
+            <div className="hidden sm:flex flex-[0.8] bg-gradient-to-br from-[#2a2c31] to-[#1a1b1e] flex-col items-center justify-center p-10 border-l border-gray-800">
               <h3 className="text-sm font-medium mb-8 text-gray-300">log in with QR code</h3>
               <div className="bg-white p-3 rounded-lg mb-6">
                 <img 
                   src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=YOUKU_AUTH_PLACEHOLDER" 
                   alt="QR Code" 
-                  className="w-32 h-32"
+                  className="w-28 h-28 lg:w-32 lg:h-32"
                 />
               </div>
               <p className="text-[10px] text-gray-500 text-center">
