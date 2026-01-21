@@ -7,14 +7,13 @@ interface VideoCardProps {
   video: Video;
   className?: string;
   showRating?: boolean;
-  onClick?: () => void;
+  onClick?: (e: React.MouseEvent) => void;
 }
 
 export function VideoCard({ video, className, showRating = true, onClick }: VideoCardProps) {
-  const handleClick = (e: React.MouseEvent) => {
+  const handleClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
     if (onClick) {
-      e.preventDefault();
-      onClick();
+      onClick(e);
     }
   };
 

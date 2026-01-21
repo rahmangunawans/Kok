@@ -9,7 +9,6 @@ import Home from "@/pages/Home";
 import CategoryPage from "@/pages/CategoryPage";
 import VideoDetail from "@/pages/VideoDetail";
 import WatchPage from "@/pages/WatchPage";
-import AuthPage from "@/pages/AuthPage";
 import ProfilePage from "@/pages/ProfilePage";
 import AdminPage from "@/pages/AdminPage";
 import NotFound from "@/pages/not-found";
@@ -22,12 +21,8 @@ function Router() {
       <Route path="/video/:id" component={VideoDetail} />
       <Route path="/watch/:videoId/:episodeId" component={WatchPage} />
       
-      <Route path="/login">
-        <AuthPage mode="login" />
-      </Route>
-      <Route path="/register">
-        <AuthPage mode="register" />
-      </Route>
+      <Route path="/login" component={Home} />
+      <Route path="/register" component={Home} />
       
       <Route path="/profile" component={ProfilePage} />
       <Route path="/admin" component={AdminPage} />

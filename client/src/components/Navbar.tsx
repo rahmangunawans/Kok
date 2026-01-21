@@ -164,54 +164,66 @@ export function Navbar() {
               {showSearch ? <X className="w-5 h-5" /> : <Search className="w-5 h-5" />}
             </Button>
 
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="relative h-9 w-9 md:h-10 md:w-10 rounded-full p-0">
-                  <Avatar className="h-8 w-8 md:h-9 md:w-9 border border-primary/20">
-                    <AvatarImage src={user?.avatarUrl || undefined} alt={user?.username || "Guest"} />
-                    <AvatarFallback className="bg-primary/10 text-primary">
-                      {user ? user.username.slice(0, 2).toUpperCase() : <UserIcon className="w-5 h-5" />}
-                    </AvatarFallback>
-                  </Avatar>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent className="w-56" align="end" forceMount>
-                {user ? (
-                  <>
-                    <DropdownMenuLabel className="font-normal">
-                      <div className="flex flex-col space-y-1">
-                        <p className="text-sm font-medium leading-none">{user.username}</p>
-                        <p className="text-xs leading-none text-muted-foreground">{user.isAdmin ? 'Admin' : 'Member'}</p>
-                      </div>
-                    </DropdownMenuLabel>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={() => setLocation("/profile")}>
-                      <UserIcon className="mr-2 h-4 w-4" />
-                      <span>Profile & History</span>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" className="relative h-9 w-9 md:h-10 md:w-10 rounded-full p-0">
+                <Avatar className="h-8 w-8 md:h-9 md:w-9 border border-primary/20">
+                  <AvatarImage src={user?.avatarUrl || undefined} alt={user?.username || "Guest"} />
+                  <AvatarFallback className="bg-primary/10 text-primary">
+                    {user ? user.username.slice(0, 2).toUpperCase() : <UserIcon className="w-5 h-5" />}
+                  </AvatarFallback>
+                </Avatar>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="w-56" align="end" forceMount>
+              {user ? (
+                <>
+                  <DropdownMenuLabel className="font-normal">
+                    <div className="flex flex-col space-y-1">
+                      <p className="text-sm font-medium leading-none">{user.username}</p>
+                      <p className="text-xs leading-none text-muted-foreground">{user.isAdmin ? 'Admin' : 'Member'}</p>
+                    </div>
+                  </DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => setLocation("/profile")}>
+                    <UserIcon className="mr-2 h-4 w-4" />
+                    <span>Profile & History</span>
+                  </DropdownMenuItem>
+                  {user.isAdmin && (
+                    <DropdownMenuItem onClick={() => setLocation("/admin")}>
+                      <MonitorPlay className="mr-2 h-4 w-4" />
+                      <span>Admin Panel</span>
                     </DropdownMenuItem>
-                    {user.isAdmin && (
-                      <DropdownMenuItem onClick={() => setLocation("/admin")}>
-                        <MonitorPlay className="mr-2 h-4 w-4" />
-                        <span>Admin Panel</span>
-                      </DropdownMenuItem>
-                    )}
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={() => logout()} className="text-red-500 focus:text-red-500 focus:bg-red-500/10">
-                      <LogOut className="mr-2 h-4 w-4" />
-                      <span>Log out</span>
-                    </DropdownMenuItem>
-                  </>
-                ) : (
-                  <>
-                    <DropdownMenuLabel>Account</DropdownMenuLabel>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={() => setLocation("/login")}>
-                      <span>Sign In / Register</span>
-                    </DropdownMenuItem>
-                  </>
-                )}
-              </DropdownMenuContent>
-            </DropdownMenu>
+                  )}
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => logout()} className="text-red-500 focus:text-red-500 focus:bg-red-500/10">
+                    <LogOut className="mr-2 h-4 w-4" />
+                    <span>Log out</span>
+                  </DropdownMenuItem>
+                </>
+              ) : (
+                <>
+                  <DropdownMenuLabel>Account</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => {
+                    // Triggers the auth modal on Home page
+                    if (location === "/") {
+                      const event = new CustomEvent('open-auth-modal');
+                      window.dispatchEvent(event);
+                    } else {
+                      setLocation("/");
+                      // Small delay to ensure page transition before opening modal
+                      setTimeout(() => {
+                        window.dispatchEvent(new CustomEvent('open-auth-modal'));
+                      }, 100);
+                    }
+                  }}>
+                    <span>Sign In / Register</span>
+                  </DropdownMenuItem>
+                </>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
           </div>
         </div>
 

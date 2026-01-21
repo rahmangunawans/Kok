@@ -11,9 +11,10 @@ import { insertUserSchema } from "@shared/schema";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { useState, useEffect } from "react";
 import { SiFacebook, SiGoogle } from "react-icons/si";
+import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 
 const loginSchema = z.object({
   username: z.string().min(1, "Username is required"),
@@ -38,6 +39,15 @@ export default function Home() {
       setShowAuthModal(false);
     }
   }, [user]);
+
+  useEffect(() => {
+    const handleOpenAuth = () => {
+      setShowAuthModal(true);
+      setAuthMode("login");
+    };
+    window.addEventListener('open-auth-modal', handleOpenAuth);
+    return () => window.removeEventListener('open-auth-modal', handleOpenAuth);
+  }, []);
 
   const loginForm = useForm({
     resolver: zodResolver(loginSchema),
@@ -89,7 +99,12 @@ export default function Home() {
           <div className="flex overflow-x-auto pb-4 -mx-4 px-4 gap-x-4 gap-y-8 md:gap-x-6 scrollbar-hide">
             {allVideos?.slice(0, 12).map((video) => (
               <div key={video.id} className="min-w-[160px] sm:min-w-[200px] md:min-w-[220px] lg:min-w-[240px]">
-                <VideoCard video={video} onClick={() => !user && setShowAuthModal(true)} />
+                <VideoCard video={video} onClick={(e) => {
+                  if (!user) {
+                    e.preventDefault();
+                    setShowAuthModal(true);
+                  }
+                }} />
               </div>
             ))}
           </div>
@@ -110,7 +125,12 @@ export default function Home() {
                 .slice(0, 10)
                 .map((video) => (
                   <div key={video.id} className="min-w-[160px] sm:min-w-[200px] md:min-w-[220px] lg:min-w-[240px]">
-                    <VideoCard video={video} onClick={() => !user && setShowAuthModal(true)} />
+                    <VideoCard video={video} onClick={(e) => {
+                      if (!user) {
+                        e.preventDefault();
+                        setShowAuthModal(true);
+                      }
+                    }} />
                   </div>
                 ))}
             </div>
@@ -121,6 +141,10 @@ export default function Home() {
       {/* Auth Modal inspired by Screenshot */}
       <Dialog open={showAuthModal} onOpenChange={setShowAuthModal}>
         <DialogContent className="max-w-[850px] p-0 overflow-hidden border-none bg-transparent">
+          <VisuallyHidden>
+            <DialogTitle>{authMode === "login" ? "Login to YOUKU" : "Sign up for YOUKU"}</DialogTitle>
+          </VisuallyHidden>
+          
           <div className="relative w-full aspect-[850/500] bg-[#1a1b1e] text-white flex rounded-xl shadow-2xl overflow-hidden">
             <button 
               onClick={() => setShowAuthModal(false)}
