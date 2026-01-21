@@ -146,13 +146,6 @@ export default function Home() {
           </VisuallyHidden>
           
           <div className="relative w-full min-h-[500px] sm:aspect-[850/500] bg-[#121214] text-white flex flex-col sm:flex-row rounded-2xl overflow-hidden border border-white/5">
-            <button 
-              onClick={() => setShowAuthModal(false)}
-              className="absolute right-6 top-6 z-50 p-2 rounded-full bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white transition-all"
-            >
-              <X className="w-5 h-5" />
-            </button>
-
             {/* Left Side: Form */}
             <div className="flex-1 p-8 sm:p-12 flex flex-col justify-center">
               <div className="mb-10 text-center">
