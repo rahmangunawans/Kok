@@ -286,68 +286,71 @@ export function Navbar() {
 
       {/* VIP Modal */}
       <Dialog open={showVipModal} onOpenChange={setShowVipModal}>
-        <DialogContent className="sm:max-w-[320px] p-0 border-white/5 bg-[#121214] overflow-hidden max-h-[80vh] flex flex-col rounded-2xl shadow-2xl">
-          <div className="relative p-3.5 bg-gradient-to-br from-[#d0992e]/20 to-transparent">
-            <DialogHeader className="flex flex-row items-center justify-between gap-4">
-              <div className="space-y-0">
-                <DialogTitle className="text-base font-display font-black text-[#d0992e] flex items-center gap-1.5">
-                  <Crown className="w-3.5 h-3.5 fill-current" />
+        <DialogContent className="sm:max-w-[400px] p-0 border-white/5 bg-[#121214] overflow-hidden max-h-[90vh] flex flex-col rounded-2xl shadow-2xl [&>button]:hidden">
+          <div className="relative p-5 bg-gradient-to-br from-[#d0992e]/20 to-transparent shrink-0">
+            <DialogHeader className="flex flex-row items-center justify-between gap-4 space-y-0">
+              <div className="space-y-1">
+                <DialogTitle className="text-xl font-display font-black text-[#d0992e] flex items-center gap-2">
+                  <Crown className="w-5 h-5 fill-current" />
                   YOUKU VIP
                 </DialogTitle>
-                <div className="text-[9px] text-gray-500 font-medium">
+                <div className="text-[11px] text-gray-500 font-medium">
                   {!user && (
-                    <button 
-                      onClick={() => {
-                        setShowVipModal(false);
-                        if (location === "/") {
-                          window.dispatchEvent(new CustomEvent('open-auth-modal'));
-                        } else {
-                          setLocation("/");
-                          setTimeout(() => {
+                    <>
+                      Sign in for more benefits.{" "}
+                      <button 
+                        onClick={() => {
+                          setShowVipModal(false);
+                          if (location === "/") {
                             window.dispatchEvent(new CustomEvent('open-auth-modal'));
-                          }, 100);
-                        }
-                      }} 
-                      className="text-primary hover:underline font-bold"
-                    >
-                      Log in/Sign up for more benefits
-                    </button>
+                          } else {
+                            setLocation("/");
+                            setTimeout(() => {
+                              window.dispatchEvent(new CustomEvent('open-auth-modal'));
+                            }, 100);
+                          }
+                        }} 
+                        className="text-primary hover:underline font-bold"
+                      >
+                        Log in/Sign up
+                      </button>
+                    </>
                   )}
                 </div>
               </div>
               <button 
                 onClick={() => setShowVipModal(false)}
-                className="p-1 rounded-full bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white transition-all outline-none border-none"
+                className="p-1.5 rounded-full bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white transition-all outline-none border-none"
               >
-                <X className="w-3.5 h-3.5" />
+                <X className="w-4 h-4" />
               </button>
             </DialogHeader>
           </div>
 
-          <div className="flex-1 overflow-y-auto p-3.5 space-y-2.5 no-scrollbar">
-            <div className="grid grid-cols-1 gap-2">
+          <div className="flex-1 overflow-y-auto p-5 space-y-4 no-scrollbar min-h-[300px]">
+            <div className="grid grid-cols-1 gap-3 pb-2">
               {vipPlans.map((plan) => (
                 <div 
                   key={plan.id}
                   onClick={() => setSelectedPlan(plan)}
-                  className={`relative p-2.5 rounded-xl border transition-all cursor-pointer ${selectedPlan.id === plan.id ? 'border-[#d0992e] bg-[#d0992e]/10 shadow-[0_0_15px_rgba(208,153,46,0.1)]' : 'border-white/5 bg-white/5 hover:border-white/10'}`}
+                  className={`relative p-4 rounded-xl border transition-all cursor-pointer ${selectedPlan.id === plan.id ? 'border-[#d0992e] bg-[#d0992e]/10 shadow-[0_0_20px_rgba(208,153,46,0.1)]' : 'border-white/5 bg-white/5 hover:border-white/10'}`}
                 >
-                  <div className="flex justify-between items-start mb-0">
-                    <span className="font-bold text-white text-[11px]">{plan.name}</span>
+                  <div className="flex justify-between items-start mb-1">
+                    <span className="font-bold text-white text-sm">{plan.name}</span>
                     {plan.discount && (
-                      <Badge className="bg-[#d0992e] text-black text-[7px] font-black border-0 rounded-md px-1 py-0">
+                      <Badge className="bg-[#d0992e] text-black text-[9px] font-black border-0 rounded-md px-1.5 py-0">
                         {plan.discount}
                       </Badge>
                     )}
                   </div>
-                  <div className="flex items-baseline gap-1.5">
-                    <span className="text-base font-black text-[#d0992e]">{plan.price}</span>
-                    <span className="text-[9px] text-gray-500 line-through">{plan.originalPrice}</span>
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-xl font-black text-[#d0992e]">{plan.price}</span>
+                    <span className="text-xs text-gray-500 line-through">{plan.originalPrice}</span>
                   </div>
                   {selectedPlan.id === plan.id && (
-                    <div className="absolute right-2.5 bottom-2.5">
-                      <div className="w-3 h-3 rounded-full bg-[#d0992e] flex items-center justify-center">
-                        <Check className="w-1.5 h-1.5 text-black stroke-[5]" />
+                    <div className="absolute right-4 bottom-4">
+                      <div className="w-4 h-4 rounded-full bg-[#d0992e] flex items-center justify-center">
+                        <Check className="w-2.5 h-2.5 text-black stroke-[4]" />
                       </div>
                     </div>
                   )}
@@ -355,31 +358,31 @@ export function Navbar() {
               ))}
             </div>
 
-            <div className="p-2 rounded-xl bg-[#d0992e]/10 border border-[#d0992e]/20">
-              <p className="text-[9px] font-bold text-[#d0992e] text-center">
-                New subscribers get 60% off!
+            <div className="p-3.5 rounded-xl bg-[#d0992e]/10 border border-[#d0992e]/20">
+              <p className="text-[11px] font-bold text-[#d0992e] text-center">
+                New subscribers get 60% off the first term!
               </p>
             </div>
           </div>
 
-          <div className="p-3.5 border-t border-white/5 bg-white/[0.02]">
-            <div className="flex justify-between items-center mb-2.5">
+          <div className="p-5 border-t border-white/5 bg-white/[0.02] shrink-0">
+            <div className="flex justify-between items-center mb-4">
               <div>
-                <span className="text-base font-black text-[#d0992e]">{selectedPlan.price}</span>
+                <span className="text-xl font-black text-[#d0992e]">{selectedPlan.price}</span>
                 {selectedPlan.saving && (
-                  <p className="text-[8px] text-green-500 font-bold">{selectedPlan.saving}</p>
+                  <p className="text-[10px] text-green-500 font-bold">{selectedPlan.saving}</p>
                 )}
               </div>
-              <span className="text-[9px] text-gray-500 font-medium">Payment Method</span>
+              <span className="text-[11px] text-gray-500 font-medium">Choose Payment Method</span>
             </div>
             
-            <Button className="w-full bg-[#d0992e] hover:bg-[#d0992e]/90 text-black font-black h-9 text-xs rounded-full shadow-lg shadow-[#d0992e]/20 transition-all active:scale-[0.98]">
+            <Button className="w-full bg-[#d0992e] hover:bg-[#d0992e]/90 text-black font-black h-11 text-base rounded-full shadow-lg shadow-[#d0992e]/20 transition-all active:scale-[0.98]">
               Pay now {selectedPlan.price}
             </Button>
             
-            <div className="mt-2.5 flex flex-wrap justify-center gap-x-2 gap-y-0.5 text-[7px] text-gray-600 font-medium">
-              <button className="hover:text-[#d0992e] transition-colors">Terms</button>
-              <button className="hover:text-[#d0992e] transition-colors">Privacy</button>
+            <div className="mt-4 flex flex-wrap justify-center gap-x-4 gap-y-1 text-[9px] text-gray-600 font-medium">
+              <button className="hover:text-[#d0992e] transition-colors">VIP Membership Terms</button>
+              <button className="hover:text-[#d0992e] transition-colors">Privacy Policy</button>
             </div>
           </div>
         </DialogContent>
