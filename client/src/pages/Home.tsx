@@ -102,14 +102,16 @@ export default function Home() {
               View All
             </Link>
           </div>
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-7 gap-3 md:gap-4">
+          <div className="flex overflow-x-auto pb-4 -mx-4 px-4 gap-4 scrollbar-hide">
             {allVideos?.slice(0, 14).map((video) => (
-              <VideoCard key={video.id} video={video} onClick={(e) => {
-                if (!user) {
-                  e.preventDefault();
-                  setShowAuthModal(true);
-                }
-              }} />
+              <div key={video.id} className="min-w-[140px] sm:min-w-[160px] md:min-w-[180px] lg:min-w-[200px] xl:min-w-[220px]">
+                <VideoCard video={video} onClick={(e) => {
+                  if (!user) {
+                    e.preventDefault();
+                    setShowAuthModal(true);
+                  }
+                }} />
+              </div>
             ))}
           </div>
         </section>
@@ -123,17 +125,19 @@ export default function Home() {
                 View All
               </Link>
             </div>
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-7 gap-3 md:gap-4">
+            <div className="flex overflow-x-auto pb-4 -mx-4 px-4 gap-4 scrollbar-hide">
               {allVideos
                 ?.filter(v => v.categoryId === category.id)
-                .slice(0, 7)
+                .slice(0, 14)
                 .map((video) => (
-                  <VideoCard key={video.id} video={video} onClick={(e) => {
-                    if (!user) {
-                      e.preventDefault();
-                      setShowAuthModal(true);
-                    }
-                  }} />
+                  <div key={video.id} className="min-w-[140px] sm:min-w-[160px] md:min-w-[180px] lg:min-w-[200px] xl:min-w-[220px]">
+                    <VideoCard video={video} onClick={(e) => {
+                      if (!user) {
+                        e.preventDefault();
+                        setShowAuthModal(true);
+                      }
+                    }} />
+                  </div>
                 ))}
             </div>
           </section>
