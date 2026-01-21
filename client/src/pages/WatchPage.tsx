@@ -79,12 +79,13 @@ export default function WatchPage() {
           'fullscreen',
           'overflow_menu'
         ],
-        'overflowMenuButtons': ['language', 'playback_rate', 'captions']
+        'overflowMenuButtons': ['language', 'playback_rate', 'captions'],
+        'addQualityControls': false, // Disable built-in quality controls to avoid duplicates
       };
       ui.configure(uiConfig);
 
       player.addEventListener("error", (event: any) => {
-        console.error("Error code", event.detail.code, "object", event.detail);
+        console.error("Shaka Player Error", event.detail.code, event.detail);
       });
 
       try {
@@ -102,25 +103,26 @@ export default function WatchPage() {
           
           for (const sub of currentEpisode.subtitles) {
             try {
-              // Convert .srt to .vtt if needed, but for now assuming the URL works or browser handles it
-              // Most HLS players expect VTT. 
+              // Note: Shaka Player might need a text parser for SRT.
+              // We'll try to add it as 'application/x-subrip' or let Shaka guess.
+              // However, VTT is most reliable.
               await player.addTextTrackAsync(
                 sub.url,
                 sub.language.toLowerCase(),
                 'subtitles',
-                'text/vtt'
+                sub.url.endsWith('.srt') ? 'application/x-subrip' : 'text/vtt',
+                null,
+                sub.language === "ID" ? "Indonesian" : "English"
               );
             } catch (trackError) {
               console.error("Error adding text track", trackError);
             }
           }
           
-          // Force Shaka to recognize the new tracks
-          const languages = player.getLanguages();
+          // Force select language
+          const languages = player.getTextLanguages();
           if (languages.includes('id')) {
             player.selectTextLanguage('id');
-          } else if (languages.length > 0) {
-            player.selectTextLanguage(languages[0]);
           }
         }
       } catch (e: any) {
