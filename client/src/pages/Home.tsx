@@ -245,7 +245,7 @@ export default function Home() {
                                 <Input 
                                   placeholder="Username" 
                                   {...field} 
-                                  className="bg-[#1a1a1c] border-white/10 rounded-xl h-12 sm:h-14 px-5 focus-visible:ring-primary/40 focus-visible:border-primary transition-all placeholder:text-gray-500 text-base text-white !opacity-100" 
+                                  className="bg-[#1a1a1c] border-white/10 rounded-xl h-12 sm:h-14 px-5 focus-visible:ring-primary/40 focus-visible:border-primary transition-none placeholder:text-gray-500 text-base text-white outline-none" 
                                 />
                               </FormControl>
                               <FormMessage />
@@ -262,7 +262,7 @@ export default function Home() {
                                   type="password" 
                                   placeholder="Password (min 6 chars)" 
                                   {...field} 
-                                  className="bg-[#1a1a1c] border-white/10 rounded-xl h-12 sm:h-14 px-5 focus-visible:ring-primary/40 focus-visible:border-primary transition-all placeholder:text-gray-500 text-base text-white !opacity-100" 
+                                  className="bg-[#1a1a1c] border-white/10 rounded-xl h-12 sm:h-14 px-5 focus-visible:ring-primary/40 focus-visible:border-primary transition-none placeholder:text-gray-500 text-base text-white outline-none" 
                                 />
                               </FormControl>
                               <FormMessage />
