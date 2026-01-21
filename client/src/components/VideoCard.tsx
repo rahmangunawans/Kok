@@ -65,11 +65,11 @@ export function VideoCard({ video, className, showRating = true, onClick }: Vide
         )}
       </div>
 
-      <div className="space-y-1">
-        <h3 className="line-clamp-1 font-semibold text-base leading-tight group-hover:text-primary transition-colors">
+      <div className="space-y-0.5">
+        <h3 className="line-clamp-1 font-medium text-sm leading-tight group-hover:text-primary transition-colors">
           {video.title}
         </h3>
-        <div className="flex items-center justify-between text-xs text-muted-foreground">
+        <div className="flex items-center justify-between text-[10px] text-muted-foreground">
           <span className="flex items-center gap-1">
             <Calendar className="w-3 h-3" />
             {video.year || "N/A"}

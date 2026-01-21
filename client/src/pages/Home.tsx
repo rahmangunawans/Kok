@@ -92,18 +92,18 @@ export default function Home() {
       {featuredVideos && <HeroCarousel videos={featuredVideos.slice(0, 5)} />}
 
       {/* Categories Sections */}
-      <div className="container mx-auto px-4 space-y-16">
+      <div className="max-w-[1400px] mx-auto px-4 space-y-12">
         
         {/* Latest Videos */}
-        <section className="space-y-6">
+        <section className="space-y-4">
           <div className="flex items-center justify-between">
-            <h2 className="text-2xl md:text-3xl font-display font-bold">Latest Updates</h2>
+            <h2 className="text-xl md:text-2xl font-display font-bold">Latest Updates</h2>
             <Link href="/category/all" className="text-sm font-medium text-primary hover:underline">
               View All
             </Link>
           </div>
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 md:gap-6">
-            {allVideos?.slice(0, 12).map((video) => (
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-7 gap-3 md:gap-4">
+            {allVideos?.slice(0, 14).map((video) => (
               <VideoCard key={video.id} video={video} onClick={(e) => {
                 if (!user) {
                   e.preventDefault();
@@ -116,17 +116,17 @@ export default function Home() {
 
         {/* Categories Preview */}
         {categories?.slice(0, 3).map((category) => (
-          <section key={category.id} className="space-y-6">
+          <section key={category.id} className="space-y-4">
             <div className="flex items-center justify-between">
-              <h2 className="text-2xl md:text-3xl font-display font-bold">{category.name}</h2>
+              <h2 className="text-xl md:text-2xl font-display font-bold">{category.name}</h2>
               <Link href={`/category/${category.slug}`} className="text-sm font-medium text-primary hover:underline">
                 View All
               </Link>
             </div>
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 md:gap-6">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-7 gap-3 md:gap-4">
               {allVideos
                 ?.filter(v => v.categoryId === category.id)
-                .slice(0, 6)
+                .slice(0, 7)
                 .map((video) => (
                   <VideoCard key={video.id} video={video} onClick={(e) => {
                     if (!user) {
