@@ -117,10 +117,10 @@ export default function Home() {
           <div className="relative">
             <div 
               ref={el => sectionRefs.current['latest'] = el}
-              className="flex gap-3 md:gap-4 overflow-x-auto no-scrollbar scroll-smooth pb-4"
+              className="flex gap-2 md:gap-3 overflow-x-auto no-scrollbar scroll-smooth pb-4"
             >
               {allVideos?.slice(0, 20).map((video) => (
-                <div key={video.id} className="w-[140px] xs:w-[160px] sm:w-[180px] md:w-[200px] shrink-0">
+                <div key={video.id} className="w-[110px] xs:w-[130px] sm:w-[150px] md:w-[170px] shrink-0">
                   <VideoCard video={video} onClick={(e) => {
                     if (!user) {
                       e.preventDefault();
@@ -134,15 +134,15 @@ export default function Home() {
             {/* Navigation Buttons */}
             <button 
               onClick={() => scrollSection('latest', 'left')}
-              className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-1/2 w-10 h-10 rounded-full bg-black/60 border border-white/10 text-white flex items-center justify-center opacity-0 group-hover/section:opacity-100 transition-opacity hover:bg-black/80 z-10 hidden md:flex"
+              className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-1/2 w-8 h-8 rounded-full bg-black/60 border border-white/10 text-white flex items-center justify-center opacity-0 group-hover/section:opacity-100 transition-opacity hover:bg-black/80 z-10 hidden md:flex"
             >
-              <ChevronLeft className="w-6 h-6" />
+              <ChevronLeft className="w-5 h-5" />
             </button>
             <button 
               onClick={() => scrollSection('latest', 'right')}
-              className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-1/2 w-10 h-10 rounded-full bg-black/60 border border-white/10 text-white flex items-center justify-center opacity-0 group-hover/section:opacity-100 transition-opacity hover:bg-black/80 z-10 hidden md:flex"
+              className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-1/2 w-8 h-8 rounded-full bg-black/60 border border-white/10 text-white flex items-center justify-center opacity-0 group-hover/section:opacity-100 transition-opacity hover:bg-black/80 z-10 hidden md:flex"
             >
-              <ChevronRight className="w-6 h-6" />
+              <ChevronRight className="w-5 h-5" />
             </button>
           </div>
         </section>
@@ -160,13 +160,13 @@ export default function Home() {
             <div className="relative">
               <div 
                 ref={el => sectionRefs.current[category.id.toString()] = el}
-                className="flex gap-3 md:gap-4 overflow-x-auto no-scrollbar scroll-smooth pb-4"
+                className="flex gap-2 md:gap-3 overflow-x-auto no-scrollbar scroll-smooth pb-4"
               >
                 {allVideos
                   ?.filter(v => v.categoryId === category.id)
                   .slice(0, 20)
                   .map((video) => (
-                    <div key={video.id} className="w-[140px] xs:w-[160px] sm:w-[180px] md:w-[200px] shrink-0">
+                    <div key={video.id} className="w-[110px] xs:w-[130px] sm:w-[150px] md:w-[170px] shrink-0">
                       <VideoCard video={video} onClick={(e) => {
                         if (!user) {
                           e.preventDefault();
@@ -180,15 +180,15 @@ export default function Home() {
               {/* Navigation Buttons */}
               <button 
                 onClick={() => scrollSection(category.id.toString(), 'left')}
-                className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-1/2 w-10 h-10 rounded-full bg-black/60 border border-white/10 text-white flex items-center justify-center opacity-0 group-hover/section:opacity-100 transition-opacity hover:bg-black/80 z-10 hidden md:flex"
+                className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-1/2 w-8 h-8 rounded-full bg-black/60 border border-white/10 text-white flex items-center justify-center opacity-0 group-hover/section:opacity-100 transition-opacity hover:bg-black/80 z-10 hidden md:flex"
               >
-                <ChevronLeft className="w-6 h-6" />
+                <ChevronLeft className="w-5 h-5" />
               </button>
               <button 
                 onClick={() => scrollSection(category.id.toString(), 'right')}
-                className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-1/2 w-10 h-10 rounded-full bg-black/60 border border-white/10 text-white flex items-center justify-center opacity-0 group-hover/section:opacity-100 transition-opacity hover:bg-black/80 z-10 hidden md:flex"
+                className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-1/2 w-8 h-8 rounded-full bg-black/60 border border-white/10 text-white flex items-center justify-center opacity-0 group-hover/section:opacity-100 transition-opacity hover:bg-black/80 z-10 hidden md:flex"
               >
-                <ChevronRight className="w-6 h-6" />
+                <ChevronRight className="w-5 h-5" />
               </button>
             </div>
           </section>
