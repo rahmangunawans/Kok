@@ -58,8 +58,17 @@ export default function WatchPage() {
       }
 
       // @ts-ignore
-      const player = new shaka.Player(videoRef.current);
+      const player = new shaka.Player();
+      await player.attach(videoRef.current);
       playerRef.current = player;
+
+      // Listen for time updates directly from player if needed, 
+      // though native onTimeUpdate should work.
+      player.addEventListener('timeupdate', () => {
+        if (videoRef.current) {
+          handleProgress();
+        }
+      });
 
       // @ts-ignore
       const ui = new shaka.ui.Overlay(
