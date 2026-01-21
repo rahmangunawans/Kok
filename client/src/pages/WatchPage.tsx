@@ -306,7 +306,7 @@ export default function WatchPage() {
 
   if (!currentEpisode) return <div>Episode not found</div>;
 
-  const sources = currentEpisode.sources && currentEpisode.sources.length > 0 
+  const sourcesData = currentEpisode.sources && currentEpisode.sources.length > 0 
     ? currentEpisode.sources 
     : [];
 
@@ -337,7 +337,7 @@ export default function WatchPage() {
               <DropdownMenuLabel>Quality</DropdownMenuLabel>
               <DropdownMenuSeparator className="bg-white/5" />
               <DropdownMenuRadioGroup value={quality} onValueChange={setQuality}>
-                {sources.map((s: any) => (
+                {sourcesData.map((s: any) => (
                   <DropdownMenuRadioItem key={s.quality} value={s.quality} className="text-xs">
                     {s.quality}
                   </DropdownMenuRadioItem>
