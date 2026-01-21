@@ -33,6 +33,9 @@ export const videos = pgTable("videos", {
   views: integer("views").default(0),
   isFeatured: boolean("is_featured").default(false),
   isVip: boolean("is_vip").default(false),
+  seoTitle: text("seo_title"),
+  seoDescription: text("seo_description"),
+  ogImage: text("og_image"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -41,24 +44,24 @@ export const episodes = pgTable("episodes", {
   videoId: integer("video_id").notNull().references(() => videos.id),
   title: text("title").notNull(),
   episodeNumber: integer("episode_number").notNull(),
-  sourceUrl: text("source_url").notNull(), // Main source (can be HLS master playlist)
-  duration: integer("duration"), // in seconds
+  sourceUrl: text("source_url").notNull(), 
+  duration: integer("duration"), 
   thumbnailUrl: text("thumbnail_url"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
-// For specific qualities if not using HLS master playlist, or for fallback MP4s
 export const videoSources = pgTable("video_sources", {
   id: serial("id").primaryKey(),
   episodeId: integer("episode_id").notNull().references(() => episodes.id),
-  quality: text("quality").notNull(), // '360p', '720p', '1080p'
+  quality: text("quality").notNull(), // '360p', '480p', '720p', '1080p'
   url: text("url").notNull(),
+  type: text("type").default("mp4"), // 'mp4', 'hls'
 });
 
 export const subtitles = pgTable("subtitles", {
   id: serial("id").primaryKey(),
   episodeId: integer("episode_id").notNull().references(() => episodes.id),
-  language: text("language").notNull(), // 'en', 'id', 'cn'
+  language: text("language").notNull(), 
   url: text("url").notNull(),
   format: text("format").default("vtt"),
 });
@@ -68,7 +71,7 @@ export const watchHistory = pgTable("watch_history", {
   userId: integer("user_id").notNull().references(() => users.id),
   videoId: integer("video_id").notNull().references(() => videos.id),
   episodeId: integer("episode_id").notNull().references(() => episodes.id),
-  progress: integer("progress").default(0), // in seconds
+  progress: integer("progress").default(0), 
   lastWatched: timestamp("last_watched").defaultNow(),
 });
 
@@ -81,12 +84,19 @@ export const watchlist = pgTable("watchlist", {
 
 // === RELATIONS ===
 
+export const usersRelations = relations(users, ({ many }) => ({
+  watchHistory: many(watchHistory),
+  watchlist: many(watchlist),
+}));
+
 export const videosRelations = relations(videos, ({ one, many }) => ({
   category: one(categories, {
     fields: [videos.categoryId],
     references: [categories.id],
   }),
   episodes: many(episodes),
+  watchlist: many(watchlist),
+  watchHistory: many(watchHistory),
 }));
 
 export const episodesRelations = relations(episodes, ({ one, many }) => ({
@@ -96,6 +106,21 @@ export const episodesRelations = relations(episodes, ({ one, many }) => ({
   }),
   sources: many(videoSources),
   subtitles: many(subtitles),
+  watchHistory: many(watchHistory),
+}));
+
+export const videoSourcesRelations = relations(videoSources, ({ one }) => ({
+  episode: one(episodes, {
+    fields: [videoSources.episodeId],
+    references: [episodes.id],
+  }),
+}));
+
+export const subtitlesRelations = relations(subtitles, ({ one }) => ({
+  episode: one(episodes, {
+    fields: [subtitles.episodeId],
+    references: [episodes.id],
+  }),
 }));
 
 export const watchHistoryRelations = relations(watchHistory, ({ one }) => ({
@@ -144,7 +169,6 @@ export type Subtitle = typeof subtitles.$inferSelect;
 export type WatchHistory = typeof watchHistory.$inferSelect;
 export type WatchlistItem = typeof watchlist.$inferSelect;
 
-// extended types for responses
 export type VideoWithCategory = Video & { category: Category | null };
 export type VideoWithEpisodes = Video & { episodes: Episode[] };
 export type EpisodeWithDetails = Episode & { sources: VideoSource[], subtitles: Subtitle[] };

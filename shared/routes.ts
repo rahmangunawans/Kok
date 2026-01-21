@@ -5,12 +5,16 @@ import {
   insertEpisodeSchema, 
   insertWatchHistorySchema,
   insertWatchlistSchema,
+  insertVideoSourceSchema,
+  insertSubtitleSchema,
   users, 
   videos, 
   episodes, 
   categories, 
   watchHistory, 
-  watchlist 
+  watchlist,
+  videoSources,
+  subtitles
 } from './schema';
 
 export const errorSchemas = {
@@ -94,13 +98,22 @@ export const api = {
         400: errorSchemas.validation,
       },
     },
+    update: {
+      method: 'PATCH' as const,
+      path: '/api/videos/:id',
+      input: insertVideoSchema.partial(),
+      responses: {
+        200: z.custom<typeof videos.$inferSelect>(),
+        404: errorSchemas.notFound,
+      },
+    },
   },
   episodes: {
     get: {
       method: 'GET' as const,
       path: '/api/episodes/:id',
       responses: {
-        200: z.custom<typeof episodes.$inferSelect & { sources: any[], subtitles: any[] }>(),
+        200: z.custom<typeof episodes.$inferSelect & { sources: typeof videoSources.$inferSelect[], subtitles: typeof subtitles.$inferSelect[] }>(),
         404: errorSchemas.notFound,
       },
     },
@@ -111,13 +124,46 @@ export const api = {
         200: z.array(z.custom<typeof episodes.$inferSelect>()),
       },
     },
+    create: {
+      method: 'POST' as const,
+      path: '/api/episodes',
+      input: insertEpisodeSchema,
+      responses: {
+        201: z.custom<typeof episodes.$inferSelect>(),
+      },
+    },
   },
-  categories: {
+  sources: {
     list: {
       method: 'GET' as const,
-      path: '/api/categories',
+      path: '/api/episodes/:episodeId/sources',
       responses: {
-        200: z.array(z.custom<typeof categories.$inferSelect>()),
+        200: z.array(z.custom<typeof videoSources.$inferSelect>()),
+      },
+    },
+    create: {
+      method: 'POST' as const,
+      path: '/api/sources',
+      input: insertVideoSourceSchema,
+      responses: {
+        201: z.custom<typeof videoSources.$inferSelect>(),
+      },
+    },
+  },
+  subtitles: {
+    list: {
+      method: 'GET' as const,
+      path: '/api/episodes/:episodeId/subtitles',
+      responses: {
+        200: z.array(z.custom<typeof subtitles.$inferSelect>()),
+      },
+    },
+    create: {
+      method: 'POST' as const,
+      path: '/api/subtitles',
+      input: insertSubtitleSchema,
+      responses: {
+        201: z.custom<typeof subtitles.$inferSelect>(),
       },
     },
   },
@@ -159,6 +205,15 @@ export const api = {
       path: '/api/history',
       responses: {
         200: z.array(z.custom<typeof watchHistory.$inferSelect & { video: typeof videos.$inferSelect, episode: typeof episodes.$inferSelect }>()),
+      },
+    },
+  },
+  categories: {
+    list: {
+      method: 'GET' as const,
+      path: '/api/categories',
+      responses: {
+        200: z.array(z.custom<typeof categories.$inferSelect>()),
       },
     },
   },
