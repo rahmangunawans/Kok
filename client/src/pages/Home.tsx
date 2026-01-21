@@ -1,7 +1,7 @@
 import { useVideos, useCategories } from "@/hooks/use-videos";
 import { HeroCarousel } from "@/components/HeroCarousel";
 import { VideoCard } from "@/components/VideoCard";
-import { Loader2, MonitorPlay, LogIn, UserPlus, X } from "lucide-react";
+import { Loader2, MonitorPlay, LogIn, UserPlus, X, ChevronLeft, ChevronRight } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 import { useForm } from "react-hook-form";
@@ -12,7 +12,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { SiFacebook, SiGoogle } from "react-icons/si";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 
@@ -78,6 +78,17 @@ export default function Home() {
   const { data: allVideos, isLoading: loadingAll } = useVideos({ search: searchTerm || undefined });
   const { data: categories } = useCategories();
 
+  const sectionRefs = useRef<Record<string, HTMLDivElement | null>>({});
+
+  const scrollSection = (id: string, direction: 'left' | 'right') => {
+    const el = sectionRefs.current[id];
+    if (el) {
+      const scrollAmount = el.clientWidth * 0.8;
+      const scrollTo = direction === 'left' ? el.scrollLeft - scrollAmount : el.scrollLeft + scrollAmount;
+      el.scrollTo({ left: scrollTo, behavior: 'smooth' });
+    }
+  };
+
   if (loadingFeatured || loadingAll) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -95,46 +106,90 @@ export default function Home() {
       <div className="max-w-[1400px] mx-auto px-4 space-y-12">
         
         {/* Latest Videos */}
-        <section className="space-y-4">
+        <section className="space-y-4 group/section relative">
           <div className="flex items-center justify-between">
             <h2 className="text-xl md:text-2xl font-display font-bold">Latest Updates</h2>
             <Link href="/category/all" className="text-sm font-medium text-primary hover:underline">
               View All
             </Link>
           </div>
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-7 2xl:grid-cols-8 gap-3 md:gap-4">
-            {allVideos?.slice(0, 16).map((video) => (
-              <VideoCard key={video.id} video={video} onClick={(e) => {
-                if (!user) {
-                  e.preventDefault();
-                  setShowAuthModal(true);
-                }
-              }} />
-            ))}
+          
+          <div className="relative">
+            <div 
+              ref={el => sectionRefs.current['latest'] = el}
+              className="flex gap-3 md:gap-4 overflow-x-auto no-scrollbar scroll-smooth pb-4"
+            >
+              {allVideos?.slice(0, 20).map((video) => (
+                <div key={video.id} className="w-[140px] xs:w-[160px] sm:w-[180px] md:w-[200px] shrink-0">
+                  <VideoCard video={video} onClick={(e) => {
+                    if (!user) {
+                      e.preventDefault();
+                      setShowAuthModal(true);
+                    }
+                  }} />
+                </div>
+              ))}
+            </div>
+
+            {/* Navigation Buttons */}
+            <button 
+              onClick={() => scrollSection('latest', 'left')}
+              className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-1/2 w-10 h-10 rounded-full bg-black/60 border border-white/10 text-white flex items-center justify-center opacity-0 group-hover/section:opacity-100 transition-opacity hover:bg-black/80 z-10 hidden md:flex"
+            >
+              <ChevronLeft className="w-6 h-6" />
+            </button>
+            <button 
+              onClick={() => scrollSection('latest', 'right')}
+              className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-1/2 w-10 h-10 rounded-full bg-black/60 border border-white/10 text-white flex items-center justify-center opacity-0 group-hover/section:opacity-100 transition-opacity hover:bg-black/80 z-10 hidden md:flex"
+            >
+              <ChevronRight className="w-6 h-6" />
+            </button>
           </div>
         </section>
 
         {/* Categories Preview */}
         {categories?.slice(0, 3).map((category) => (
-          <section key={category.id} className="space-y-4">
+          <section key={category.id} className="space-y-4 group/section relative">
             <div className="flex items-center justify-between">
               <h2 className="text-xl md:text-2xl font-display font-bold">{category.name}</h2>
               <Link href={`/category/${category.slug}`} className="text-sm font-medium text-primary hover:underline">
                 View All
               </Link>
             </div>
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-7 2xl:grid-cols-8 gap-3 md:gap-4">
-              {allVideos
-                ?.filter(v => v.categoryId === category.id)
-                .slice(0, 16)
-                .map((video) => (
-                  <VideoCard key={video.id} video={video} onClick={(e) => {
-                    if (!user) {
-                      e.preventDefault();
-                      setShowAuthModal(true);
-                    }
-                  }} />
-                ))}
+
+            <div className="relative">
+              <div 
+                ref={el => sectionRefs.current[category.id.toString()] = el}
+                className="flex gap-3 md:gap-4 overflow-x-auto no-scrollbar scroll-smooth pb-4"
+              >
+                {allVideos
+                  ?.filter(v => v.categoryId === category.id)
+                  .slice(0, 20)
+                  .map((video) => (
+                    <div key={video.id} className="w-[140px] xs:w-[160px] sm:w-[180px] md:w-[200px] shrink-0">
+                      <VideoCard video={video} onClick={(e) => {
+                        if (!user) {
+                          e.preventDefault();
+                          setShowAuthModal(true);
+                        }
+                      }} />
+                    </div>
+                  ))}
+              </div>
+
+              {/* Navigation Buttons */}
+              <button 
+                onClick={() => scrollSection(category.id.toString(), 'left')}
+                className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-1/2 w-10 h-10 rounded-full bg-black/60 border border-white/10 text-white flex items-center justify-center opacity-0 group-hover/section:opacity-100 transition-opacity hover:bg-black/80 z-10 hidden md:flex"
+              >
+                <ChevronLeft className="w-6 h-6" />
+              </button>
+              <button 
+                onClick={() => scrollSection(category.id.toString(), 'right')}
+                className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-1/2 w-10 h-10 rounded-full bg-black/60 border border-white/10 text-white flex items-center justify-center opacity-0 group-hover/section:opacity-100 transition-opacity hover:bg-black/80 z-10 hidden md:flex"
+              >
+                <ChevronRight className="w-6 h-6" />
+              </button>
             </div>
           </section>
         ))}
