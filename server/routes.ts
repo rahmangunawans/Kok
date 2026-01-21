@@ -5,7 +5,7 @@ import { storage } from "./storage";
 import { api } from "@shared/routes";
 import { z } from "zod";
 import { setupAuth } from "./auth";
-import { insertVideoSchema, insertEpisodeSchema, categories, videos, episodes } from "@shared/schema";
+import { insertVideoSchema, insertEpisodeSchema, categories, videos, episodes, videoSources, subtitles } from "@shared/schema";
 import { db } from "./db";
 
 import { hashPassword } from "./auth";
