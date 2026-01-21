@@ -36,6 +36,9 @@ export default function WatchPage() {
   const [showSubtitles, setShowSubtitles] = useState(true);
   const [currentSubtitle, setCurrentSubtitle] = useState("en");
   const [playbackRate, setPlaybackRate] = useState(1);
+  const [isPlaying, setIsPlaying] = useState(true);
+  const [volume, setVolume] = useState(0.8);
+  const [isMuted, setIsMuted] = useState(false);
   const playerRef = useRef<ReactPlayer>(null);
 
   useEffect(() => {
@@ -51,12 +54,14 @@ export default function WatchPage() {
         case " ":
         case "k":
           e.preventDefault();
-          // Logic for play/pause would go here if we had state for it
+          setIsPlaying(prev => !prev);
           break;
         case "f":
           e.preventDefault();
           const playerElement = document.querySelector(".player-wrapper");
-          if (playerElement?.requestFullscreen) {
+          if (document.fullscreenElement) {
+            document.exitFullscreen();
+          } else if (playerElement?.requestFullscreen) {
             playerElement.requestFullscreen();
           }
           break;
@@ -67,7 +72,15 @@ export default function WatchPage() {
           playerRef.current?.seekTo(playerRef.current.getCurrentTime() + 10);
           break;
         case "m":
-          // Mute logic
+          setIsMuted(prev => !prev);
+          break;
+        case "arrowup":
+          e.preventDefault();
+          setVolume(prev => Math.min(1, prev + 0.1));
+          break;
+        case "arrowdown":
+          e.preventDefault();
+          setVolume(prev => Math.max(0, prev - 0.1));
           break;
       }
     };
@@ -95,7 +108,8 @@ export default function WatchPage() {
     }
   }, [user, vId, eId, nextEpisode, setLocation, updateHistory]);
 
-  const handleProgress = ({ playedSeconds }: { playedSeconds: number }) => {
+  const handleProgress = (progress: { playedSeconds: number }) => {
+    const { playedSeconds } = progress;
     if (user && playedSeconds > 5 && Math.floor(playedSeconds) % 30 === 0) {
       updateHistory({
         userId: user.id,
@@ -117,18 +131,18 @@ export default function WatchPage() {
   if (!currentEpisode) return <div>Episode not found</div>;
 
   // Multi-quality sources from user or episode data
-  const sources = currentEpisode.sources?.length > 0 ? currentEpisode.sources : [
-    { quality: "1080p", url: "https://cffaws.wetvinfo.com/svp_50217/01A41C6E77267B867049C1CEF4CE75F3A4E8E3260A7C9606FEACD7AD4380CC8751748AD2CF7976008675923AD906CB8A93A899B27C00CEC4F5EFE045CAFA5B0C37FE8BC1EA0D922B0198837D7FDD05E3199F82E56F742DB68A7DE7CF4F30FB0DA543BC8370384AE0EB49E7F7DB59F289224A354EB1924168079C4DC9C7868A1E5C/gzc_1000207_0bcarqayaaabduahwedlpbusrdgeqcfadbka.f321004.ts.m3u8?ver=4" },
-    { quality: "720p", url: "https://cffaws.wetvinfo.com/svp_50217/01A41C6E77267B867049C1CEF4CE75F3A4E8E3260A7C9606FEACD7AD4380CC8751748AD2CF7976008675923AD906CB8A93A899B27C00CEC4F5EFE045CAFA5B0C37FE8BC1EA0D922B0198837D7FDD05E319785C3439C43A29772548A7B3026F8D7AD8DD8070BF78AFA08529A75A812DCAD9F5A433034712F7D53CF3DD7DD1D40192/gzc_1000207_0bcarqayaaabduahwedlpbusrdgeqcfadbka.f321003.ts.m3u8?ver=4" },
-    { quality: "480p", url: "https://cffaws.wetvinfo.com/svp_50217/01A41C6E77267B867049C1CEF4CE75F3A4E8E3260A7C9606FEACD7AD4380CC8751748AD2CF7976008675923AD906CB8A93A899B27C00CEC4F5EFE045CAFA5B0C37FE8BC1EA0D922B0198837D7FDD05E319D680F5EA28868AEC38886863FF1780034EE38E59AAB7C8C2797A94A5ABBDB7EBE8B8467AD3C3C2FFB6EDCA34C24A02B6/gzc_1000207_0bcarqayaaabduahwedlpbusrdgeqcfadbka.f321002.ts.m3u8?ver=4" },
-    { quality: "360p", url: "https://cffaws.wetvinfo.com/svp_50217/01A41C6E77267B867049C1CEF4CE75F3A4E8E3260A7C9606FEACD7AD4380CC8751748AD2CF7976008675923AD906CB8A93A899B27C00CEC4F5EFE045CAFA5B0C37FE8BC1EA0D922B0198837D7FDD05E319745A66387729CBF890B1654417968F92734ECAF82C36F26779C564B772780E44AD614DB7AF9B6772305148B0A7AB4E90/gzc_1000207_0bcarqayaaabduahwedlpbusrdgeqcfadbka.f321001.ts.m3u8?ver=4" }
+  const sources = [
+    { quality: "1080p", url: "https://cffaws.wetvinfo.com/svp_50217/01B608D3B0BBD929B555269C00B4BC237C0A89F33808997C43849CA6A84BA1BD15F9C909DC117110E95DB9B38949863D37FF9D3BF79DA6AF32D91408E982229F647F495C694EC7D7748E84B8AEAB3812254B6348DA64954DBC32C7566F98A7A98CBB3EC53E492A744D49C4CB3F6940B73AE344789482FA2182DCEAFA495A8796A6/gzc_1000207_0bcaweataaabweafcgtf3zusrmoegc6qcnka.f321004.ts.m3u8?ver=4" },
+    { quality: "720p", url: "https://cffaws.wetvinfo.com/svp_50217/01B608D3B0BBD929B555269C00B4BC237C0A89F33808997C43849CA6A84BA1BD15F9C909DC117110E95DB9B38949863D37FF9D3BF79DA6AF32D91408E982229F647F495C694EC7D7748E84B8AEAB38122567B64336EAFD160DC2F94EF697AA7CB2E88749B7C24632585EFAFF895AB70C1E4B846D2B065834A7A68BACF1C0CA20F9/gzc_1000207_0bcaweataaabweafcgtf3zusrmoegc6qcnka.f321003.ts.m3u8?ver=4" },
+    { quality: "480p", url: "https://cffaws.wetvinfo.com/svp_50217/01B608D3B0BBD929B555269C00B4BC237C0A89F33808997C43849CA6A84BA1BD15F9C909DC117110E95DB9B38949863D37FF9D3BF79DA6AF32D91408E982229F647F495C694EC7D7748E84B8AEAB3812253040D48C9B756929B641883009DC4F3CDCAF4CA5CAEB24740DF6DD2D00E46E7232B58AAB8530FB6D9A8C7453F0135896/gzc_1000207_0bcaweataaabweafcgtf3zusrmoegc6qcnka.f321002.ts.m3u8?ver=4" },
+    { quality: "360p", url: "https://cffaws.wetvinfo.com/svp_50217/01B608D3B0BBD929B555269C00B4BC237C0A89F33808997C43849CA6A84BA1BD15F9C909DC117110E95DB9B38949863D37FF9D3BF79DA6AF32D91408E982229F647F495C694EC7D7748E84B8AEAB381225CFA5FFBDCF1003FB5BDC4BFF407C4D13F5FCB42DAEB322535087A6F76C85FB2806A05C641E3C9AA83861F2A4EE5E75F8/gzc_1000207_0bcaweataaabweafcgtf3zusrmoegc6qcnka.f321001.ts.m3u8?ver=4" }
   ];
 
   const videoUrl = sources.find(s => s.quality === quality)?.url || sources[0].url;
 
   const subtitleTracks = [
-    { language: "en", label: "English", url: "https://cffaws.wetvinfo.com/svp_50217/gzc_1000207_0bcarqayaaabduahwedlpbusrdgeqcfadbka.f51503000.srt?vkey=014369C6A3F0F4949080A872CBB309B9306BA188B1CC9ADAEC76699E03732DC0E301269218FBAFD4E368025E146EACB43B18180559F0BB93AD4C2B0C88498A7377A90234FD2D15BFD22A02436F2309D2611D9F742AFD930385F07B6F67AD249FDEB011E97784EFB7B987AC1FC501C59FE844E419001312133EEDE2821C1E2CF348" },
-    { language: "id", label: "Indonesian", url: "https://cffaws.wetvinfo.com/svp_50217/gzc_1000207_0bcarqayaaabduahwedlpbusrdgeqcfadbka.f51508000.srt?vkey=014369C6A3F0F4949080A872CBB309B9306BA188B1CC9ADAEC76699E03732DC0E301269218FBAFD4E368025E146EACB43B18180559F0BB93AD4C2B0C88498A7377A90234FD2D15BFD22A02436F2309D26130060E794C0C79308E9E3CB0F79019FDB98B1274B9349917111073E02ED71175D0168772C8D63E17D06D7D19FAF2EBDB" }
+    { language: "id", label: "Indonesian", url: "https://cffaws.wetvinfo.com/svp_50217/gzc_1000207_0bcaweataaabweafcgtf3zusrmoegc6qcnka.f51708000.srt?vkey=01EE006AEC01F022633C886C6E119816F9C862C378705642939F5240A1AD4CB7BE59C4EA6CC113149A08AF36BB4162CAE97CB700E400C35F2B80B25450671472069BEE546DAF141D64568CE0651E8A844147B1C499DFF0E68F9DBB41B32AE98ECA592EC3052D83C4F7C6E8ABA48402B65DC8714828E97BAD9C7BC6F234EAD96D9A" },
+    { language: "en", label: "English", url: "https://cffaws.wetvinfo.com/svp_50217/gzc_1000207_0bcaweataaabweafcgtf3zusrmoegc6qcnka.f51703000.srt?vkey=01EE006AEC01F022633C886C6E119816F9C862C378705642939F5240A1AD4CB7BE59C4EA6CC113149A08AF36BB4162CAE97CB700E400C35F2B80B25450671472069BEE546DAF14101DA79E40C099821741EBB8705D354CCC229D1FE7F40EC0A9C889905D9BB0FA284EEA74D05CFDCF1DF60B82EFA4DA671" }
   ];
 
   return (
@@ -200,7 +214,9 @@ export default function WatchPage() {
           width="100%"
           height="100%"
           controls={true}
-          playing={true}
+          playing={isPlaying}
+          volume={volume}
+          muted={isMuted}
           playbackRate={playbackRate}
           config={{
             file: {
@@ -216,7 +232,7 @@ export default function WatchPage() {
               })) : []
             }
           }}
-          onProgress={handleProgress}
+          onProgress={(progress) => handleProgress({ playedSeconds: progress.playedSeconds })}
           onEnded={handleEnded}
           style={{ backgroundColor: "black" }}
         />
