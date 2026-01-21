@@ -149,7 +149,7 @@ export function Navbar() {
             {/* VIP Button - On mobile, this will stay on the left if we reorder the elements */}
             <Button 
               onClick={() => setShowVipModal(true)}
-              className="flex bg-accent hover:bg-accent/90 text-accent-foreground font-bold gap-1 rounded-full px-4 md:px-6 h-9 md:h-10"
+              className="flex bg-accent hover:bg-accent/90 text-accent-foreground font-bold gap-1 rounded-full px-4 md:px-6 h-9 md:h-10 order-first md:order-none"
             >
               <Crown className="w-4 h-4" />
               <span className="hidden xs:inline">VIP</span>
@@ -159,7 +159,7 @@ export function Navbar() {
             <Button
               variant="ghost"
               size="icon"
-              className="md:hidden h-9 w-9 rounded-full"
+              className="md:hidden h-9 w-9 rounded-full order-1 md:order-none"
               onClick={() => setShowSearch(!showSearch)}
             >
               {showSearch ? <X className="w-5 h-5" /> : <Search className="w-5 h-5" />}
@@ -167,7 +167,7 @@ export function Navbar() {
 
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="relative h-9 w-9 md:h-10 md:w-10 rounded-full p-0">
+                <Button variant="ghost" className="relative h-9 w-9 md:h-10 md:w-10 rounded-full p-0 order-last md:order-none">
                   <Avatar className="h-8 w-8 md:h-9 md:w-9 border border-primary/20">
                     <AvatarImage src={user?.avatarUrl || undefined} alt={user?.username || "Guest"} />
                     <AvatarFallback className="bg-primary/10 text-primary">
