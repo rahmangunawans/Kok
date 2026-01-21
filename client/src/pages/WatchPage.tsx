@@ -67,7 +67,7 @@ export default function WatchPage() {
       );
 
       // Configure Shaka UI
-      const config = {
+      const uiConfig = {
         'controlPanelElements': [
           'play_pause',
           'time_and_duration',
@@ -75,26 +75,16 @@ export default function WatchPage() {
           'mute',
           'volume',
           'captions',
-          'quality',
           'playback_rate',
           'fullscreen',
           'overflow_menu'
         ],
-        'addLanguageControls': true,
-        'addQualityControls': true,
-        'castReceiverAppId': 'CC1AD845',
-        'clearBufferOnQualityChange': true,
       };
-      ui.configure(config);
+      ui.configure(uiConfig);
 
       player.addEventListener("error", (event: any) => {
         console.error("Error code", event.detail.code, "object", event.detail);
       });
-
-      // Handle quality selection change to reload the player with the new URL
-      // Note: Shaka usually handles quality internally if the manifest allows it,
-      // but here we are using multiple single-stream URLs.
-      // So we use the 'quality' state to trigger a reload.
 
       try {
         const sources = currentEpisode.sources && currentEpisode.sources.length > 0 
@@ -107,16 +97,30 @@ export default function WatchPage() {
         
         // Add subtitles to Shaka Player after loading
         if (currentEpisode.subtitles && currentEpisode.subtitles.length > 0) {
-          currentEpisode.subtitles.forEach((sub: any) => {
-            player.addTextTrackAsync(
-              sub.url,
-              sub.language.toLowerCase(),
-              'subtitles',
-              'text/vtt',
-              null,
-              sub.language === "ID" ? "Indonesian" : "English"
-            );
-          });
+          // Clear existing text tracks if any
+          player.setTextTrackVisibility(true);
+          
+          for (const sub of currentEpisode.subtitles) {
+            try {
+              await player.addTextTrackAsync(
+                sub.url,
+                sub.language.toLowerCase(),
+                'subtitles',
+                'text/vtt',
+                null,
+                sub.language === "ID" ? "Indonesian" : "English"
+              );
+            } catch (trackError) {
+              console.error("Error adding text track", trackError);
+            }
+          }
+          
+          // Select default language
+          const tracks = player.getTextTracks();
+          const idTrack = tracks.find((t: any) => t.language === 'id');
+          if (idTrack) {
+            player.selectTextTrack(idTrack);
+          }
         }
       } catch (e: any) {
         console.error("Error loading video", e);
