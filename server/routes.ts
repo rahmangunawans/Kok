@@ -7,6 +7,7 @@ import { z } from "zod";
 import { setupAuth } from "./auth";
 import { insertVideoSchema, insertEpisodeSchema, categories, videos, episodes, videoSources, subtitles } from "@shared/schema";
 import { db } from "./db";
+import { eq } from "drizzle-orm";
 
 import { hashPassword } from "./auth";
 
