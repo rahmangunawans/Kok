@@ -1,8 +1,9 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { useParams, Link, useLocation } from "wouter";
 import { useVideo, useEpisode, useEpisodes, useUpdateHistory, useVideos } from "@/hooks/use-videos";
-import ReactPlayer from "react-player";
-import { Loader2, ChevronLeft, ChevronRight, List, Star, Play, Settings, Subtitles } from "lucide-react";
+import * as shaka from "shaka-player/dist/shaka-player.ui.js";
+import "shaka-player/dist/controls.css";
+import { Loader2, ChevronLeft, ChevronRight, List, Star, Play, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
@@ -10,7 +11,6 @@ import { useAuth } from "@/hooks/use-auth";
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
@@ -33,54 +33,96 @@ export default function WatchPage() {
 
   const [hasWindow, setHasWindow] = useState(false);
   const [quality, setQuality] = useState("auto");
-  const [showSubtitles, setShowSubtitles] = useState(true);
-  const [currentSubtitle, setCurrentSubtitle] = useState("en");
-  const [playbackRate, setPlaybackRate] = useState(1);
-  const [isPlaying, setIsPlaying] = useState(true);
-  const [volume, setVolume] = useState(0.8);
-  const [isMuted, setIsMuted] = useState(false);
-  const playerRef = useRef<ReactPlayer>(null);
+  
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const videoContainerRef = useRef<HTMLDivElement>(null);
+  const playerRef = useRef<any>(null);
 
   useEffect(() => {
     setHasWindow(true);
   }, []);
+
+  // Initialize Shaka Player
+  useEffect(() => {
+    if (!currentEpisode || !videoRef.current || !videoContainerRef.current) return;
+
+    const initPlayer = async () => {
+      // @ts-ignore
+      shaka.polyfill.installAll();
+      // @ts-ignore
+      if (!shaka.Player.isBrowserSupported()) {
+        console.error("Browser not supported!");
+        return;
+      }
+
+      // @ts-ignore
+      const player = new shaka.Player(videoRef.current);
+      playerRef.current = player;
+
+      // @ts-ignore
+      const ui = new shaka.ui.Overlay(
+        player,
+        videoContainerRef.current,
+        videoRef.current
+      );
+
+      player.addEventListener("error", (event: any) => {
+        console.error("Error code", event.detail.code, "object", event.detail);
+      });
+
+      try {
+        const sources = currentEpisode.sources && currentEpisode.sources.length > 0 
+          ? currentEpisode.sources 
+          : [];
+        
+        const videoUrl = sources.find((s: any) => s.quality === quality)?.url || sources[0]?.url || currentEpisode.sourceUrl;
+
+        await player.load(videoUrl);
+      } catch (e: any) {
+        console.error("Error loading video", e);
+      }
+    };
+
+    initPlayer();
+
+    return () => {
+      if (playerRef.current) {
+        playerRef.current.destroy();
+      }
+    };
+  }, [currentEpisode, quality]);
 
   // Keyboard Shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
 
+      const video = videoRef.current;
+      if (!video) return;
+
       switch (e.key.toLowerCase()) {
         case " ":
         case "k":
           e.preventDefault();
-          setIsPlaying(prev => !prev);
+          if (video.paused) video.play();
+          else video.pause();
           break;
         case "f":
           e.preventDefault();
-          const playerElement = document.querySelector(".player-wrapper");
           if (document.fullscreenElement) {
             document.exitFullscreen();
-          } else if (playerElement?.requestFullscreen) {
-            playerElement.requestFullscreen();
+          } else {
+            videoContainerRef.current?.requestFullscreen();
           }
           break;
         case "j":
-          playerRef.current?.seekTo(playerRef.current.getCurrentTime() - 10);
+          video.currentTime = Math.max(0, video.currentTime - 10);
           break;
         case "l":
-          playerRef.current?.seekTo(playerRef.current.getCurrentTime() + 10);
+          video.currentTime = Math.min(video.duration, video.currentTime + 10);
           break;
         case "m":
-          setIsMuted(prev => !prev);
-          break;
-        case "arrowup":
-          e.preventDefault();
-          setVolume(prev => Math.min(1, prev + 0.1));
-          break;
-        case "arrowdown":
-          e.preventDefault();
-          setVolume(prev => Math.max(0, prev - 0.1));
+          video.muted = !video.muted;
           break;
       }
     };
@@ -94,23 +136,12 @@ export default function WatchPage() {
   const nextEpisode = currentIndex !== -1 && sortedEpisodes ? sortedEpisodes[currentIndex + 1] : null;
   const prevEpisode = currentIndex !== -1 && sortedEpisodes ? sortedEpisodes[currentIndex - 1] : null;
 
-  const handleEnded = useCallback(() => {
-    if (user) {
-      updateHistory({
-        userId: user.id,
-        videoId: vId,
-        episodeId: eId,
-        progress: Math.floor(playerRef.current?.getDuration() || 0),
-      });
-    }
-    if (nextEpisode) {
-      setLocation(`/watch/${vId}/${nextEpisode.id}`);
-    }
-  }, [user, vId, eId, nextEpisode, setLocation, updateHistory]);
+  const handleProgress = useCallback(() => {
+    const video = videoRef.current;
+    if (!video || !user) return;
 
-  const handleProgress = (progress: { playedSeconds: number }) => {
-    const { playedSeconds } = progress;
-    if (user && playedSeconds > 5 && Math.floor(playedSeconds) % 30 === 0) {
+    const playedSeconds = video.currentTime;
+    if (playedSeconds > 5 && Math.floor(playedSeconds) % 30 === 0) {
       updateHistory({
         userId: user.id,
         videoId: vId,
@@ -118,7 +149,22 @@ export default function WatchPage() {
         progress: Math.floor(playedSeconds),
       });
     }
-  };
+  }, [user, vId, eId, updateHistory]);
+
+  const handleEnded = useCallback(() => {
+    const video = videoRef.current;
+    if (user && video) {
+      updateHistory({
+        userId: user.id,
+        videoId: vId,
+        episodeId: eId,
+        progress: Math.floor(video.duration || 0),
+      });
+    }
+    if (nextEpisode) {
+      setLocation(`/watch/${vId}/${nextEpisode.id}`);
+    }
+  }, [user, vId, eId, nextEpisode, setLocation, updateHistory]);
 
   if (loadingEpisode || !hasWindow) {
     return (
@@ -130,33 +176,16 @@ export default function WatchPage() {
 
   if (!currentEpisode) return <div>Episode not found</div>;
 
-  // Multi-quality sources from user or episode data
   const sources = currentEpisode.sources && currentEpisode.sources.length > 0 
     ? currentEpisode.sources 
-    : [
-        { quality: "1080p", url: "https://cffaws.wetvinfo.com/svp_50217/01B608D3B0BBD929B555269C00B4BC237C0A89F33808997C43849CA6A84BA1BD15F9C909DC117110E95DB9B38949863D37FF9D3BF79DA6AF32D91408E982229F647F495C694EC7D7748E84B8AEAB3812254B6348DA64954DBC32C7566F98A7A98CBB3EC53E492A744D49C4CB3F6940B73AE344789482FA2182DCEAFA495A8796A6/gzc_1000207_0bcaweataaabweafcgtf3zusrmoegc6qcnka.f321004.ts.m3u8?ver=4" },
-        { quality: "720p", url: "https://cffaws.wetvinfo.com/svp_50217/01B608D3B0BBD929B555269C00B4BC237C0A89F33808997C43849CA6A84BA1BD15F9C909DC117110E95DB9B38949863D37FF9D3BF79DA6AF32D91408E982229F647F495C694EC7D7748E84B8AEAB38122567B64336EAFD160DC2F94EF697AA7CB2E88749B7C24632585EFAFF895AB70C1E4B846D2B065834A7A68BACF1C0CA20F9/gzc_1000207_0bcaweataaabweafcgtf3zusrmoegc6qcnka.f321003.ts.m3u8?ver=4" },
-        { quality: "480p", url: "https://cffaws.wetvinfo.com/svp_50217/01B608D3B0BBD929B555269C00B4BC237C0A89F33808997C43849CA6A84BA1BD15F9C909DC117110E95DB9B38949863D37FF9D3BF79DA6AF32D91408E982229F647F495C694EC7D7748E84B8AEAB3812253040D48C9B756929B641883009DC4F3CDCAF4CA5CAEB24740DF6DD2D00E46E7232B58AAB8530FB6D9A8C7453F0135896/gzc_1000207_0bcaweataaabweafcgtf3zusrmoegc6qcnka.f321002.ts.m3u8?ver=4" },
-        { quality: "360p", url: "https://cffaws.wetvinfo.com/svp_50217/01B608D3B0BBD929B555269C00B4BC237C0A89F33808997C43849CA6A84BA1BD15F9C909DC117110E95DB9B38949863D37FF9D3BF79DA6AF32D91408E982229F647F495C694EC7D7748E84B8AEAB381225CFA5FFBDCF1003FB5BDC4BFF407C4D13F5FCB42DAEB322535087A6F76C85FB2806A05C641E3C9AA83861F2A4EE5E75F8/gzc_1000207_0bcaweataaabweafcgtf3zusrmoegc6qcnka.f321001.ts.m3u8?ver=4" }
-      ];
-
-  const videoUrl = sources.find(s => s.quality === quality)?.url || sources[0].url;
-
-  const subtitleTracks = currentEpisode.subtitles && currentEpisode.subtitles.length > 0
-    ? currentEpisode.subtitles.map(sub => ({
-        language: sub.language.toLowerCase(),
-        label: sub.language === "ID" ? "Indonesian" : sub.language === "EN" ? "English" : sub.language,
-        url: sub.url
-      }))
-    : [
-        { language: "id", label: "Indonesian", url: "https://cffaws.wetvinfo.com/svp_50217/gzc_1000207_0bcaweataaabweafcgtf3zusrmoegc6qcnka.f51708000.srt?vkey=01EE006AEC01F022633C886C6E119816F9C862C378705642939F5240A1AD4CB7BE59C4EA6CC113149A08AF36BB4162CAE97CB700E400C35F2B80B25450671472069BEE546DAF141D64568CE0651E8A844147B1C499DFF0E68F9DBB41B32AE98ECA592EC3052D83C4F7C6E8ABA48402B65DC8714828E97BAD9C7BC6F234EAD96D9A" },
-        { language: "en", label: "English", url: "https://cffaws.wetvinfo.com/svp_50217/gzc_1000207_0bcaweataaabweafcgtf3zusrmoegc6qcnka.f51703000.srt?vkey=01EE006AEC01F022633C886C6E119816F9C862C378705642939F5240A1AD4CB7BE59C4EA6CC113149A08AF36BB4162CAE97CB700E400C35F2B80B25450671472069BEE546DAF141D64568CE0651E8A844101DA79E40C099821741EBB8705D354CCC229D1FE7F40EC0A9C889905D9BB0FA284EEA74D05CFDCF1DF60B82EFA4DA671" }
-      ];
+    : [];
 
   return (
     <div className="min-h-screen bg-black flex flex-col">
-      {/* Player Container */}
-      <div className="relative w-full aspect-video md:h-[calc(100vh-200px)] bg-black shadow-2xl z-10 player-wrapper group">
+      <div 
+        ref={videoContainerRef}
+        className="relative w-full aspect-video md:h-[calc(100vh-200px)] bg-black shadow-2xl z-10 player-wrapper group"
+      >
         <div className="absolute top-4 left-4 z-20 opacity-0 group-hover:opacity-100 transition-opacity">
           <Link href={`/video/${vId}`}>
             <Button variant="ghost" className="text-white hover:bg-white/10 backdrop-blur-sm">
@@ -166,90 +195,40 @@ export default function WatchPage() {
           </Link>
         </div>
 
-        {/* Custom Player Controls Overlays */}
         <div className="absolute bottom-12 right-4 z-20 flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-          {/* Subtitle Toggle */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button size="icon" variant="ghost" className="text-white hover:bg-white/10 backdrop-blur-sm">
-                <Subtitles className="h-5 w-5" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="bg-[#1a1a1c] border-white/10 text-white">
-              <DropdownMenuLabel>Subtitles</DropdownMenuLabel>
-              <DropdownMenuSeparator className="bg-white/5" />
-              <DropdownMenuRadioGroup value={showSubtitles ? currentSubtitle : "off"} onValueChange={(v) => {
-                if (v === "off") setShowSubtitles(false);
-                else {
-                  setShowSubtitles(true);
-                  setCurrentSubtitle(v);
-                }
-              }}>
-                <DropdownMenuRadioItem value="off">Off</DropdownMenuRadioItem>
-                {subtitleTracks.map(sub => (
-                  <DropdownMenuRadioItem key={sub.language} value={sub.language}>
-                    {sub.label}
-                  </DropdownMenuRadioItem>
-                ))}
-              </DropdownMenuRadioGroup>
-            </DropdownMenuContent>
-          </DropdownMenu>
-
-          {/* Quality Selection */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button size="icon" variant="ghost" className="text-white hover:bg-white/10 backdrop-blur-sm">
-                <Settings className="h-5 w-5" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="bg-[#1a1a1c] border-white/10 text-white">
-              <DropdownMenuLabel>Quality</DropdownMenuLabel>
-              <DropdownMenuSeparator className="bg-white/5" />
-              <DropdownMenuRadioGroup value={quality} onValueChange={setQuality}>
-                {sources.map(s => (
-                  <DropdownMenuRadioItem key={s.quality} value={s.quality}>
-                    {s.quality}
-                  </DropdownMenuRadioItem>
-                ))}
-              </DropdownMenuRadioGroup>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          {sources.length > 0 && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button size="icon" variant="ghost" className="text-white hover:bg-white/10 backdrop-blur-sm">
+                  <Settings className="h-5 w-5" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="bg-[#1a1a1c] border-white/10 text-white">
+                <DropdownMenuLabel>Quality</DropdownMenuLabel>
+                <DropdownMenuSeparator className="bg-white/5" />
+                <DropdownMenuRadioGroup value={quality} onValueChange={setQuality}>
+                  {sources.map((s: any) => (
+                    <DropdownMenuRadioItem key={s.quality} value={s.quality}>
+                      {s.quality}
+                    </DropdownMenuRadioItem>
+                  ))}
+                </DropdownMenuRadioGroup>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
         </div>
 
-        <ReactPlayer
-          ref={playerRef}
-          url={videoUrl}
-          width="100%"
-          height="100%"
-          controls={true}
-          playing={isPlaying}
-          volume={volume}
-          muted={isMuted}
-          playbackRate={playbackRate}
-          config={{
-            file: {
-              attributes: {
-                crossOrigin: "anonymous", 
-              },
-              tracks: showSubtitles ? subtitleTracks.map(sub => ({
-                kind: 'subtitles',
-                src: sub.url,
-                srcLang: sub.language,
-                label: sub.label,
-                default: sub.language === currentSubtitle
-              })) : []
-            }
-          }}
-          onProgress={(progress) => handleProgress({ playedSeconds: progress.playedSeconds })}
+        <video
+          ref={videoRef}
+          className="w-full h-full"
+          onTimeUpdate={handleProgress}
           onEnded={handleEnded}
-          style={{ backgroundColor: "black" }}
+          autoPlay
         />
       </div>
 
-      {/* Info & Playlist Bar */}
       <div className="flex-1 bg-background border-t border-white/10 pb-20">
         <div className="container mx-auto px-4 py-6 flex flex-col lg:flex-row gap-8">
-          
           <div className="flex-1 space-y-4">
             <h1 className="text-2xl md:text-3xl font-display font-bold">
               {video?.title} - <span className="text-primary">Ep {currentEpisode.episodeNumber}</span>
@@ -279,7 +258,6 @@ export default function WatchPage() {
               </p>
             </div>
 
-            {/* Recommendations Section */}
             <div className="pt-10 space-y-6">
               <div className="flex items-center justify-between">
                 <h3 className="text-xl font-display font-bold">Recommended for You</h3>
@@ -322,7 +300,6 @@ export default function WatchPage() {
             </div>
           </div>
 
-          {/* Episode List Sidebar */}
           <div className="w-full lg:w-[350px] shrink-0">
             <div className="bg-card rounded-xl border border-white/5 overflow-hidden flex flex-col h-[500px] sticky top-24">
               <div className="p-4 border-b border-white/5 flex items-center justify-between bg-muted/20">
