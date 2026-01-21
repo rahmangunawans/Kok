@@ -33,7 +33,6 @@ export default function WatchPage() {
 
   const [hasWindow, setHasWindow] = useState(false);
   const [quality, setQuality] = useState("1080p");
-  const sourcesData = currentEpisode?.sources || [];
   
   const videoRef = useRef<HTMLVideoElement>(null);
   const videoContainerRef = useRef<HTMLDivElement>(null);
