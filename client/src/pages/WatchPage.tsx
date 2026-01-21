@@ -32,6 +32,7 @@ export default function WatchPage() {
   const { mutate: updateHistory } = useUpdateHistory();
 
   const [hasWindow, setHasWindow] = useState(false);
+  const [quality, setQuality] = useState("auto"); // Default to auto
   
   const videoRef = useRef<HTMLVideoElement>(null);
   const videoContainerRef = useRef<HTMLDivElement>(null);
@@ -98,6 +99,35 @@ export default function WatchPage() {
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [nextEpisode, vId, setLocation]);
+
+  // Manual quality switch effect
+  useEffect(() => {
+    if (!shakaPlayerRef.current || !currentEpisode || quality === "auto") return;
+    
+    const switchSource = async () => {
+      const sources = currentEpisode.sources || [];
+      const selectedSource = sources.find((s: any) => s.quality === quality);
+      const videoUrl = selectedSource?.url;
+      
+      if (videoUrl) {
+        try {
+          const currentTime = videoRef.current?.currentTime || 0;
+          const isPaused = videoRef.current?.paused;
+          
+          await shakaPlayerRef.current.load(videoUrl);
+          
+          if (videoRef.current) {
+            videoRef.current.currentTime = currentTime;
+            if (!isPaused) videoRef.current.play();
+          }
+        } catch (e) {
+          console.error("Error switching quality", e);
+        }
+      }
+    };
+
+    switchSource();
+  }, [quality, currentEpisode]);
 
   // Initialize Shaka Player
   useEffect(() => {
@@ -245,7 +275,28 @@ export default function WatchPage() {
           </Link>
         </div>
 
-        {/* Removed duplicate quality switcher - using Shaka Player SDK UI instead */}
+        {/* Custom Quality Switcher (Overlaying Shaka) to handle separate manifests */}
+        <div className="absolute top-4 right-4 z-30 opacity-0 group-hover:opacity-100 transition-opacity">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button size="sm" variant="ghost" className="text-white hover:bg-white/10 backdrop-blur-sm h-8 px-3 text-xs font-bold">
+                <Settings className="h-3 w-3 mr-2" /> {quality.toUpperCase()}
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="bg-[#1a1a1c] border-white/10 text-white">
+              <DropdownMenuLabel>Quality</DropdownMenuLabel>
+              <DropdownMenuSeparator className="bg-white/5" />
+              <DropdownMenuRadioGroup value={quality} onValueChange={setQuality}>
+                <DropdownMenuRadioItem value="auto" className="text-xs">Auto</DropdownMenuRadioItem>
+                {sourcesData.map((s: any) => (
+                  <DropdownMenuRadioItem key={s.quality} value={s.quality} className="text-xs">
+                    {s.quality}
+                  </DropdownMenuRadioItem>
+                ))}
+              </DropdownMenuRadioGroup>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
 
         {/* Remove manually implemented controls to avoid duplication with Shaka UI */}
         <video
