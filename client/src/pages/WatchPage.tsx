@@ -165,6 +165,8 @@ export default function WatchPage() {
   useEffect(() => {
     if (!currentEpisode || !videoRef.current || !videoContainerRef.current) return;
 
+    let ui: any = null;
+
     const initPlayer = async () => {
       if (!videoRef.current || !videoContainerRef.current || !currentEpisode) return;
 
@@ -181,6 +183,8 @@ export default function WatchPage() {
         if (playerRef.current) {
           try {
             await playerRef.current.destroy();
+            playerRef.current = null;
+            shakaPlayerRef.current = null;
           } catch (e) {
             console.error("Error destroying previous player", e);
           }
@@ -199,7 +203,7 @@ export default function WatchPage() {
         });
 
         // @ts-ignore
-        const ui = new shaka.ui.Overlay(
+        ui = new shaka.ui.Overlay(
           player,
           videoContainerRef.current,
           videoRef.current
@@ -229,8 +233,7 @@ export default function WatchPage() {
           manifest: { 
             retryParameters: { maxAttempts: 5, baseDelay: 1000, backoffFactor: 2 }, 
             hls: { 
-              ignoreTextStreamFailures: true,
-              useFullSegmentsForPreload: true
+              ignoreTextStreamFailures: true
             } 
           },
           streaming: { 
@@ -239,15 +242,13 @@ export default function WatchPage() {
             bufferBehind: 30, 
             alwaysStreamText: true,
             dispatchAllEmsgBoxes: true,
-            lowLatencyMode: true,
-            jumpLargeGaps: true
+            lowLatencyMode: true
           },
           abr: { enabled: true }
         });
 
         if (manifestUrl) {
           try {
-            const playerConfig = player.getConfiguration();
             console.log("Loading manifest:", manifestUrl, "isHls:", isHls);
             
             // @ts-ignore
@@ -263,14 +264,11 @@ export default function WatchPage() {
               if (playPromise !== undefined) {
                 playPromise.catch(e => {
                   console.error("Auto-play blocked, showing play button", e);
-                  // UI should handle showing a play button if needed
                 });
               }
             }
           } catch (loadErr: any) {
             console.error("Shaka load error, trying fallback", loadErr.code, loadErr);
-            // If it's a 1002 (CONTENT_UNSUPPORTED_BY_BROWSER) for HLS on some browsers,
-            // or other load errors, try the sources fallback
             if (sources.length > 0) {
               try {
                 await player.load(sources[0].url);
@@ -303,8 +301,11 @@ export default function WatchPage() {
     };
 
     initPlayer();
-    return () => { if (playerRef.current) playerRef.current.destroy(); };
-  }, [currentEpisode]);
+    return () => { 
+      if (ui) ui.destroy();
+      if (playerRef.current) playerRef.current.destroy(); 
+    };
+  }, [currentEpisode?.id, vId, eId]);
 
   const handleProgress = useCallback(() => {
     const video = videoRef.current;
