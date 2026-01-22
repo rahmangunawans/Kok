@@ -52,12 +52,12 @@ export default function ProfilePage() {
             <div className="grid gap-4">
               {history.map((item) => (
                 <div key={item.id} className="flex gap-4 p-4 rounded-xl bg-card/50 border border-white/5 hover:bg-card transition-colors">
-                  <Link href={`/watch/${item.videoId}/${item.episodeId}`} className="shrink-0 w-40 aspect-video rounded-lg overflow-hidden bg-black/20 relative group">
+                  <Link href={`/watch/${item.videoId}/${item.episodeId}`} className="shrink-0 w-40 aspect-video rounded-lg overflow-hidden bg-black/20 relative group block">
                      <img src={item.episode.thumbnailUrl || item.video.posterUrl} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
                      <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                        <Clock className="w-8 h-8 text-white" />
                      </div>
-                     <div className="absolute bottom-0 left-0 h-1 bg-primary" style={{ width: `${Math.min(100, (item.progress || 0) / (item.episode.duration || 1) * 100)}%` }} />
+                     <div className="absolute bottom-0 left-0 h-1 bg-primary z-10" style={{ width: `${Math.min(100, (item.progress || 0) / (item.episode.duration || 1) * 100)}%` }} />
                   </Link>
                   <div className="flex-1 py-1">
                     <h3 className="font-bold text-lg mb-1">{item.video.title}</h3>

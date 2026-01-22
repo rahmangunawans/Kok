@@ -211,6 +211,9 @@ export default function WatchPage() {
             'quality', 'captions', 'playback_rate', 'fullscreen', 'overflow_menu'
           ],
           'overflowMenuButtons': ['language', 'playback_rate', 'captions', 'quality'],
+          'addBigPlayButton': true,
+          'castReceiverAppId': 'CC1AD845',
+          'clearBufferOnQualityChange': true
         };
         ui.configure(uiConfig);
 
@@ -223,14 +226,32 @@ export default function WatchPage() {
         const isHls = manifestUrl?.toLowerCase().includes('.m3u8');
         
         player.configure({
-          manifest: { retryParameters: { maxAttempts: 5, baseDelay: 1000, backoffFactor: 2 }, hls: { ignoreTextStreamFailures: true } },
-          streaming: { bufferingGoal: 30, rebufferingGoal: 10, bufferBehind: 30, alwaysStreamText: true },
+          manifest: { 
+            retryParameters: { maxAttempts: 5, baseDelay: 1000, backoffFactor: 2 }, 
+            hls: { 
+              ignoreTextStreamFailures: true,
+              useFullSegmentsForPreload: true
+            } 
+          },
+          streaming: { 
+            bufferingGoal: 30, 
+            rebufferingGoal: 10, 
+            bufferBehind: 30, 
+            alwaysStreamText: true,
+            dispatchAllEmsgBoxes: true,
+            lowLatencyMode: true,
+            jumpLargeGaps: true
+          },
           abr: { enabled: true }
         });
 
         if (manifestUrl) {
           try {
-            if (isHls) {
+            const playerConfig = player.getConfiguration();
+            console.log("Loading manifest:", manifestUrl, "isHls:", isHls);
+            
+            // @ts-ignore
+            if (shaka.hls.HlsParser.isSupported() && isHls) {
               await player.load(manifestUrl, null, 'application/x-mpegurl');
             } else {
               await player.load(manifestUrl);
@@ -238,14 +259,25 @@ export default function WatchPage() {
             
             // Auto-play after load
             if (videoRef.current) {
-              videoRef.current.play().catch(e => console.error("Auto-play blocked", e));
+              const playPromise = videoRef.current.play();
+              if (playPromise !== undefined) {
+                playPromise.catch(e => {
+                  console.error("Auto-play blocked, showing play button", e);
+                  // UI should handle showing a play button if needed
+                });
+              }
             }
-          } catch (loadErr) {
-            console.error("Shaka load error, trying fallback", loadErr);
-            // Fallback to sources if manifest fails
+          } catch (loadErr: any) {
+            console.error("Shaka load error, trying fallback", loadErr.code, loadErr);
+            // If it's a 1002 (CONTENT_UNSUPPORTED_BY_BROWSER) for HLS on some browsers,
+            // or other load errors, try the sources fallback
             if (sources.length > 0) {
-              await player.load(sources[0].url);
-              if (videoRef.current) videoRef.current.play().catch(() => {});
+              try {
+                await player.load(sources[0].url);
+                if (videoRef.current) videoRef.current.play().catch(() => {});
+              } catch (fallbackErr) {
+                console.error("Fallback load also failed", fallbackErr);
+              }
             }
           }
         }
