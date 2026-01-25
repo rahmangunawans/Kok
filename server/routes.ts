@@ -11,6 +11,9 @@ import { eq } from "drizzle-orm";
 
 import { hashPassword } from "./auth";
 
+// @ts-ignore
+import { mdl } from "mdl-scraper";
+
 export async function registerRoutes(
   httpServer: Server,
   app: Express
@@ -230,6 +233,123 @@ export async function registerRoutes(
     res.json(history);
   });
   
+  // === External API Search (MyAnimeList & MyDramaList) ===
+  
+  // Search MyAnimeList using Jikan API (free, no API key)
+  app.get("/api/external/mal/search", async (req, res) => {
+    if (!req.isAuthenticated() || !(req.user as any).isAdmin) return res.status(401).send("Unauthorized");
+    
+    const query = req.query.q as string;
+    if (!query) return res.status(400).json({ message: "Query is required" });
+    
+    try {
+      const response = await fetch(`https://api.jikan.moe/v4/anime?q=${encodeURIComponent(query)}&limit=10`);
+      const data = await response.json();
+      
+      const results = data.data?.map((anime: any) => ({
+        id: anime.mal_id,
+        title: anime.title,
+        titleEnglish: anime.title_english,
+        synopsis: anime.synopsis,
+        posterUrl: anime.images?.jpg?.large_image_url || anime.images?.jpg?.image_url,
+        rating: anime.score,
+        year: anime.year || (anime.aired?.from ? new Date(anime.aired.from).getFullYear() : null),
+        episodes: anime.episodes,
+        status: anime.status,
+        type: anime.type,
+        source: "mal"
+      })) || [];
+      
+      res.json(results);
+    } catch (error) {
+      console.error("MAL search error:", error);
+      res.status(500).json({ message: "Failed to search MyAnimeList" });
+    }
+  });
+  
+  // Get anime details from MyAnimeList
+  app.get("/api/external/mal/:id", async (req, res) => {
+    if (!req.isAuthenticated() || !(req.user as any).isAdmin) return res.status(401).send("Unauthorized");
+    
+    try {
+      const response = await fetch(`https://api.jikan.moe/v4/anime/${req.params.id}/full`);
+      const data = await response.json();
+      const anime = data.data;
+      
+      if (!anime) return res.status(404).json({ message: "Anime not found" });
+      
+      res.json({
+        id: anime.mal_id,
+        title: anime.title,
+        titleEnglish: anime.title_english,
+        synopsis: anime.synopsis,
+        posterUrl: anime.images?.jpg?.large_image_url,
+        bannerUrl: anime.images?.jpg?.large_image_url,
+        rating: anime.score,
+        year: anime.year || (anime.aired?.from ? new Date(anime.aired.from).getFullYear() : null),
+        episodes: anime.episodes,
+        status: anime.status,
+        type: anime.type,
+        genres: anime.genres?.map((g: any) => g.name) || [],
+        studios: anime.studios?.map((s: any) => s.name) || [],
+        source: "mal"
+      });
+    } catch (error) {
+      console.error("MAL fetch error:", error);
+      res.status(500).json({ message: "Failed to fetch anime details" });
+    }
+  });
+  
+  // Search MyDramaList
+  app.get("/api/external/mdl/search", async (req, res) => {
+    if (!req.isAuthenticated() || !(req.user as any).isAdmin) return res.status(401).send("Unauthorized");
+    
+    const query = req.query.q as string;
+    if (!query) return res.status(400).json({ message: "Query is required" });
+    
+    try {
+      const data = await mdl.SearchQuery(query);
+      
+      const results = data.dramas?.map((drama: any) => ({
+        id: drama.slug,
+        title: drama.title,
+        posterUrl: drama.thumb,
+        url: drama.url,
+        ranking: drama.ranking,
+        type: drama.type,
+        year: drama.year,
+        source: "mdl"
+      })) || [];
+      
+      res.json(results);
+    } catch (error) {
+      console.error("MDL search error:", error);
+      res.status(500).json({ message: "Failed to search MyDramaList" });
+    }
+  });
+  
+  // Get drama details from MyDramaList
+  app.get("/api/external/mdl/:slug", async (req, res) => {
+    if (!req.isAuthenticated() || !(req.user as any).isAdmin) return res.status(401).send("Unauthorized");
+    
+    try {
+      const data = await mdl.FetchQuery(req.params.slug);
+      
+      res.json({
+        id: req.params.slug,
+        title: data.title,
+        synopsis: data.synopsis,
+        posterUrl: data.poster,
+        rating: data.rating,
+        cast: data.cast || [],
+        source: "mdl"
+      });
+    } catch (error) {
+      console.error("MDL fetch error:", error);
+      res.status(500).json({ message: "Failed to fetch drama details" });
+    }
+  });
+
   // Seed Data Endpoint (Auto-run on start typically, but exposed here for testing)
   await seedData();
   await createAdminUser();
