@@ -14,12 +14,12 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import {
   Form,
@@ -42,6 +42,17 @@ import {
   TabsList,
   TabsTrigger,
 } from "@/components/ui/tabs";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Badge } from "@/components/ui/badge";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2, Plus, Pencil, Trash2, LayoutDashboard, Film, Tag, Users, Play, List } from "lucide-react";
@@ -53,10 +64,10 @@ export default function AdminPage() {
   const { user, isLoading: authLoading } = useAuth();
   const { toast } = useToast();
   
-  // States for Modals
   const [isVideoDialogOpen, setIsVideoDialogOpen] = useState(false);
   const [isEpisodeDialogOpen, setIsEpisodeDialogOpen] = useState(false);
   const [isCategoryDialogOpen, setIsCategoryDialogOpen] = useState(false);
+  const [isActorDialogOpen, setIsActorDialogOpen] = useState(false);
   
   const [editingVideo, setEditingVideo] = useState<Video | null>(null);
   const [editingEpisode, setEditingEpisode] = useState<Episode | null>(null);
@@ -64,7 +75,8 @@ export default function AdminPage() {
   const [editingActor, setEditingActor] = useState<Actor | null>(null);
   const [selectedVideoId, setSelectedVideoId] = useState<number | null>(null);
 
-  // Queries
+  const [deleteConfirm, setDeleteConfirm] = useState<{ type: string; id: number } | null>(null);
+
   const { data: videos, isLoading: videosLoading } = useQuery<Video[]>({
     queryKey: ["/api/videos"],
   });
@@ -82,7 +94,6 @@ export default function AdminPage() {
     enabled: !!selectedVideoId,
   });
 
-  // Mutations
   const videoMutation = useMutation({
     mutationFn: async (data: any) => {
       const method = editingVideo ? "PATCH" : "POST";
@@ -96,6 +107,19 @@ export default function AdminPage() {
       setIsVideoDialogOpen(false);
       setEditingVideo(null);
     },
+    onError: () => {
+      toast({ title: "Gagal", description: "Terjadi kesalahan", variant: "destructive" });
+    },
+  });
+
+  const deleteVideoMutation = useMutation({
+    mutationFn: async (id: number) => {
+      await apiRequest("DELETE", `/api/videos/${id}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/videos"] });
+      toast({ title: "Berhasil", description: "Video telah dihapus" });
+    },
   });
 
   const episodeMutation = useMutation({
@@ -108,8 +132,18 @@ export default function AdminPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/videos", selectedVideoId, "episodes"] });
       toast({ title: "Berhasil", description: `Episode telah ${editingEpisode ? "diperbarui" : "ditambahkan"}` });
-      setIsEpisodeDialogOpen(false);
       setEditingEpisode(null);
+      episodeForm.reset({ title: "", episodeNumber: 1, sourceUrl: "", duration: 0, thumbnailUrl: "" });
+    },
+  });
+
+  const deleteEpisodeMutation = useMutation({
+    mutationFn: async (id: number) => {
+      await apiRequest("DELETE", `/api/episodes/${id}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/videos", selectedVideoId, "episodes"] });
+      toast({ title: "Berhasil", description: "Episode telah dihapus" });
     },
   });
 
@@ -128,7 +162,41 @@ export default function AdminPage() {
     },
   });
 
-  // Forms
+  const deleteCategoryMutation = useMutation({
+    mutationFn: async (id: number) => {
+      await apiRequest("DELETE", `/api/categories/${id}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/categories"] });
+      toast({ title: "Berhasil", description: "Kategori telah dihapus" });
+    },
+  });
+
+  const actorMutation = useMutation({
+    mutationFn: async (data: any) => {
+      const method = editingActor ? "PATCH" : "POST";
+      const url = editingActor ? `/api/actors/${editingActor.id}` : "/api/actors";
+      const res = await apiRequest(method, url, data);
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/actors"] });
+      toast({ title: "Berhasil", description: `Aktor telah ${editingActor ? "diperbarui" : "ditambahkan"}` });
+      setIsActorDialogOpen(false);
+      setEditingActor(null);
+    },
+  });
+
+  const deleteActorMutation = useMutation({
+    mutationFn: async (id: number) => {
+      await apiRequest("DELETE", `/api/actors/${id}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/actors"] });
+      toast({ title: "Berhasil", description: "Aktor telah dihapus" });
+    },
+  });
+
   const videoForm = useForm({
     resolver: zodResolver(insertVideoSchema),
     defaultValues: {
@@ -139,7 +207,7 @@ export default function AdminPage() {
       rating: 0,
       year: new Date().getFullYear(),
       country: "",
-      categoryId: undefined,
+      categoryId: undefined as number | undefined,
       isFeatured: false,
       isVip: false,
     },
@@ -163,6 +231,24 @@ export default function AdminPage() {
       slug: "",
     },
   });
+
+  const actorForm = useForm({
+    resolver: zodResolver(insertActorSchema),
+    defaultValues: {
+      name: "",
+      avatarUrl: "",
+    },
+  });
+
+  const handleDelete = () => {
+    if (!deleteConfirm) return;
+    const { type, id } = deleteConfirm;
+    if (type === "video") deleteVideoMutation.mutate(id);
+    else if (type === "category") deleteCategoryMutation.mutate(id);
+    else if (type === "actor") deleteActorMutation.mutate(id);
+    else if (type === "episode") deleteEpisodeMutation.mutate(id);
+    setDeleteConfirm(null);
+  };
 
   if (authLoading) {
     return (
@@ -189,7 +275,7 @@ export default function AdminPage() {
       <div className="flex flex-col gap-8">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Admin Panel</h1>
-          <p className="text-muted-foreground">Kelola konten video, episode, kategori, dan analitik</p>
+          <p className="text-muted-foreground">Kelola konten video, episode, kategori, dan aktor</p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
@@ -213,13 +299,11 @@ export default function AdminPage() {
           </Card>
           <Card className="hover-elevate">
             <CardHeader className="flex flex-row items-center justify-between gap-1 space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Video Unggulan</CardTitle>
-              <LayoutDashboard className="h-4 w-4 text-muted-foreground" />
+              <CardTitle className="text-sm font-medium">Total Aktor</CardTitle>
+              <Users className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">
-                {videos?.filter(v => v.isFeatured).length || 0}
-              </div>
+              <div className="text-2xl font-bold">{actors?.length || 0}</div>
             </CardContent>
           </Card>
           <Card className="hover-elevate">
@@ -236,35 +320,150 @@ export default function AdminPage() {
         </div>
 
         <Tabs defaultValue="videos" className="w-full">
-          <TabsList className="grid w-full grid-cols-4 max-w-md">
-            <TabsTrigger value="videos">Videos</TabsTrigger>
-            <TabsTrigger value="categories">Categories</TabsTrigger>
-            <TabsTrigger value="actors">Actors</TabsTrigger>
-            <TabsTrigger value="analytics">Analytics</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-3 max-w-md">
+            <TabsTrigger value="videos" data-testid="tab-videos">Videos</TabsTrigger>
+            <TabsTrigger value="categories" data-testid="tab-categories">Categories</TabsTrigger>
+            <TabsTrigger value="actors" data-testid="tab-actors">Actors</TabsTrigger>
           </TabsList>
 
           <TabsContent value="videos" className="space-y-4">
             <div className="flex justify-end pt-4">
-              <Button onClick={() => { setEditingVideo(null); videoForm.reset({
-                title: "",
-                description: "",
-                posterUrl: "",
-                bannerUrl: "",
-                rating: 0,
-                year: new Date().getFullYear(),
-                country: "",
-                categoryId: undefined,
-                isFeatured: false,
-                isVip: false,
-              }); setIsVideoDialogOpen(true); }} className="gap-2">
+              <Button 
+                data-testid="button-add-video"
+                onClick={() => { 
+                  setEditingVideo(null); 
+                  videoForm.reset({
+                    title: "",
+                    description: "",
+                    posterUrl: "",
+                    bannerUrl: "",
+                    rating: 0,
+                    year: new Date().getFullYear(),
+                    country: "",
+                    categoryId: undefined,
+                    isFeatured: false,
+                    isVip: false,
+                  }); 
+                  setIsVideoDialogOpen(true); 
+                }} 
+                className="gap-2"
+              >
                 <Plus className="h-4 w-4" /> Tambah Video
               </Button>
             </div>
-            {/* ... */}
+            <Card>
+              <CardContent className="p-0">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Poster</TableHead>
+                      <TableHead>Judul</TableHead>
+                      <TableHead>Tahun</TableHead>
+                      <TableHead>Kategori</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Views</TableHead>
+                      <TableHead className="text-right">Aksi</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {videos?.map(video => (
+                      <TableRow key={video.id} data-testid={`row-video-${video.id}`}>
+                        <TableCell>
+                          {video.posterUrl && (
+                            <img 
+                              src={video.posterUrl} 
+                              alt={video.title} 
+                              className="w-12 h-16 object-cover rounded"
+                            />
+                          )}
+                        </TableCell>
+                        <TableCell className="font-medium">{video.title}</TableCell>
+                        <TableCell>{video.year}</TableCell>
+                        <TableCell>
+                          {categories?.find(c => c.id === video.categoryId)?.name || "-"}
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex gap-1 flex-wrap">
+                            {video.isFeatured && <Badge variant="default">Featured</Badge>}
+                            {video.isVip && <Badge variant="secondary">VIP</Badge>}
+                          </div>
+                        </TableCell>
+                        <TableCell>{video.views?.toLocaleString() || 0}</TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex justify-end gap-1">
+                            <Button 
+                              variant="ghost" 
+                              size="icon"
+                              data-testid={`button-episodes-${video.id}`}
+                              onClick={() => { 
+                                setSelectedVideoId(video.id); 
+                                setEditingEpisode(null);
+                                episodeForm.reset({ title: "", episodeNumber: 1, sourceUrl: "", duration: 0, thumbnailUrl: "" });
+                                setIsEpisodeDialogOpen(true); 
+                              }}
+                            >
+                              <List className="h-4 w-4" />
+                            </Button>
+                            <Button 
+                              variant="ghost" 
+                              size="icon"
+                              data-testid={`button-edit-video-${video.id}`}
+                              onClick={() => { 
+                                setEditingVideo(video); 
+                                videoForm.reset({
+                                  title: video.title,
+                                  description: video.description || "",
+                                  posterUrl: video.posterUrl || "",
+                                  bannerUrl: video.bannerUrl || "",
+                                  rating: video.rating || 0,
+                                  year: video.year || new Date().getFullYear(),
+                                  country: video.country || "",
+                                  categoryId: video.categoryId ?? undefined,
+                                  isFeatured: video.isFeatured || false,
+                                  isVip: video.isVip || false,
+                                }); 
+                                setIsVideoDialogOpen(true); 
+                              }}
+                            >
+                              <Pencil className="h-4 w-4" />
+                            </Button>
+                            <Button 
+                              variant="ghost" 
+                              size="icon" 
+                              className="text-destructive"
+                              data-testid={`button-delete-video-${video.id}`}
+                              onClick={() => setDeleteConfirm({ type: "video", id: video.id })}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                    {(!videos || videos.length === 0) && (
+                      <TableRow>
+                        <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
+                          Belum ada video. Klik "Tambah Video" untuk menambahkan.
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              </CardContent>
+            </Card>
           </TabsContent>
+
           <TabsContent value="categories" className="space-y-4">
             <div className="flex justify-end pt-4">
-              <Button onClick={() => { setEditingCategory(null); categoryForm.reset(); setIsCategoryDialogOpen(true); }} className="gap-2">
+              <Button 
+                data-testid="button-add-category"
+                onClick={() => { 
+                  setEditingCategory(null); 
+                  categoryForm.reset({ name: "", slug: "" }); 
+                  setIsCategoryDialogOpen(true); 
+                }} 
+                className="gap-2"
+              >
                 <Plus className="h-4 w-4" /> Tambah Kategori
               </Button>
             </div>
@@ -280,46 +479,128 @@ export default function AdminPage() {
                   </TableHeader>
                   <TableBody>
                     {categories?.map(cat => (
-                      <TableRow key={cat.id}>
+                      <TableRow key={cat.id} data-testid={`row-category-${cat.id}`}>
                         <TableCell>{cat.name}</TableCell>
                         <TableCell>{cat.slug}</TableCell>
                         <TableCell className="text-right">
                           <div className="flex justify-end gap-2">
-                            <Button variant="ghost" size="icon" onClick={() => { setEditingCategory(cat); categoryForm.reset(cat); setIsCategoryDialogOpen(true); }}>
+                            <Button 
+                              variant="ghost" 
+                              size="icon" 
+                              data-testid={`button-edit-category-${cat.id}`}
+                              onClick={() => { 
+                                setEditingCategory(cat); 
+                                categoryForm.reset({ name: cat.name, slug: cat.slug }); 
+                                setIsCategoryDialogOpen(true); 
+                              }}
+                            >
                               <Pencil className="h-4 w-4" />
                             </Button>
-                            <Button variant="ghost" size="icon" className="text-destructive">
+                            <Button 
+                              variant="ghost" 
+                              size="icon" 
+                              className="text-destructive"
+                              data-testid={`button-delete-category-${cat.id}`}
+                              onClick={() => setDeleteConfirm({ type: "category", id: cat.id })}
+                            >
                               <Trash2 className="h-4 w-4" />
                             </Button>
                           </div>
                         </TableCell>
                       </TableRow>
                     ))}
+                    {(!categories || categories.length === 0) && (
+                      <TableRow>
+                        <TableCell colSpan={3} className="text-center text-muted-foreground py-8">
+                          Belum ada kategori.
+                        </TableCell>
+                      </TableRow>
+                    )}
                   </TableBody>
                 </Table>
               </CardContent>
             </Card>
           </TabsContent>
-          <TabsContent value="actors">
-             {/* Actors list */}
-          </TabsContent>
 
-          <TabsContent value="analytics">
-             <Card>
-               <CardHeader>
-                 <CardTitle>Statistik Penonton</CardTitle>
-               </CardHeader>
-               <CardContent>
-                 <div className="h-[300px] flex items-center justify-center text-muted-foreground">
-                   Grafik analitik akan ditampilkan di sini (MVP)
-                 </div>
-               </CardContent>
-             </Card>
+          <TabsContent value="actors" className="space-y-4">
+            <div className="flex justify-end pt-4">
+              <Button 
+                data-testid="button-add-actor"
+                onClick={() => { 
+                  setEditingActor(null); 
+                  actorForm.reset({ name: "", avatarUrl: "" }); 
+                  setIsActorDialogOpen(true); 
+                }} 
+                className="gap-2"
+              >
+                <Plus className="h-4 w-4" /> Tambah Aktor
+              </Button>
+            </div>
+            <Card>
+              <CardContent className="p-0">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Foto</TableHead>
+                      <TableHead>Nama</TableHead>
+                      <TableHead className="text-right">Aksi</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {actors?.map(actor => (
+                      <TableRow key={actor.id} data-testid={`row-actor-${actor.id}`}>
+                        <TableCell>
+                          {actor.avatarUrl && (
+                            <img 
+                              src={actor.avatarUrl} 
+                              alt={actor.name} 
+                              className="w-10 h-10 object-cover rounded-full"
+                            />
+                          )}
+                        </TableCell>
+                        <TableCell className="font-medium">{actor.name}</TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex justify-end gap-2">
+                            <Button 
+                              variant="ghost" 
+                              size="icon"
+                              data-testid={`button-edit-actor-${actor.id}`}
+                              onClick={() => { 
+                                setEditingActor(actor); 
+                                actorForm.reset({ name: actor.name, avatarUrl: actor.avatarUrl || "" }); 
+                                setIsActorDialogOpen(true); 
+                              }}
+                            >
+                              <Pencil className="h-4 w-4" />
+                            </Button>
+                            <Button 
+                              variant="ghost" 
+                              size="icon" 
+                              className="text-destructive"
+                              data-testid={`button-delete-actor-${actor.id}`}
+                              onClick={() => setDeleteConfirm({ type: "actor", id: actor.id })}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                    {(!actors || actors.length === 0) && (
+                      <TableRow>
+                        <TableCell colSpan={3} className="text-center text-muted-foreground py-8">
+                          Belum ada aktor.
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              </CardContent>
+            </Card>
           </TabsContent>
         </Tabs>
       </div>
 
-      {/* Video Dialog */}
       <Dialog open={isVideoDialogOpen} onOpenChange={setIsVideoDialogOpen}>
         <DialogContent className="max-w-2xl overflow-y-auto max-h-[90vh]">
           <DialogHeader>
@@ -328,16 +609,131 @@ export default function AdminPage() {
           <Form {...videoForm}>
             <form onSubmit={videoForm.handleSubmit((data) => videoMutation.mutate(data))} className="space-y-4">
               <FormField control={videoForm.control} name="title" render={({ field }) => (
-                <FormItem><FormLabel>Judul</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                <FormItem>
+                  <FormLabel>Judul</FormLabel>
+                  <FormControl><Input data-testid="input-video-title" {...field} /></FormControl>
+                  <FormMessage />
+                </FormItem>
               )} />
-              {/* Other fields... */}
-              <Button type="submit" className="w-full" disabled={videoMutation.isPending}>Simpan</Button>
+              <FormField control={videoForm.control} name="description" render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Deskripsi</FormLabel>
+                  <FormControl><Textarea data-testid="input-video-description" {...field} /></FormControl>
+                  <FormMessage />
+                </FormItem>
+              )} />
+              <div className="grid grid-cols-2 gap-4">
+                <FormField control={videoForm.control} name="posterUrl" render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>URL Poster</FormLabel>
+                    <FormControl><Input data-testid="input-video-poster" placeholder="https://..." {...field} /></FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )} />
+                <FormField control={videoForm.control} name="bannerUrl" render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>URL Banner</FormLabel>
+                    <FormControl><Input data-testid="input-video-banner" placeholder="https://..." {...field} /></FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )} />
+              </div>
+              <div className="grid grid-cols-3 gap-4">
+                <FormField control={videoForm.control} name="year" render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Tahun</FormLabel>
+                    <FormControl>
+                      <Input 
+                        data-testid="input-video-year"
+                        type="number" 
+                        {...field} 
+                        onChange={e => field.onChange(parseInt(e.target.value) || new Date().getFullYear())} 
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )} />
+                <FormField control={videoForm.control} name="country" render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Negara</FormLabel>
+                    <FormControl><Input data-testid="input-video-country" {...field} /></FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )} />
+                <FormField control={videoForm.control} name="rating" render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Rating (0-10)</FormLabel>
+                    <FormControl>
+                      <Input 
+                        data-testid="input-video-rating"
+                        type="number" 
+                        step="0.1"
+                        min="0"
+                        max="10"
+                        {...field} 
+                        onChange={e => field.onChange(parseFloat(e.target.value) || 0)} 
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )} />
+              </div>
+              <FormField control={videoForm.control} name="categoryId" render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Kategori</FormLabel>
+                  <Select 
+                    value={field.value?.toString() || ""} 
+                    onValueChange={(val) => field.onChange(val ? parseInt(val) : undefined)}
+                  >
+                    <FormControl>
+                      <SelectTrigger data-testid="select-video-category">
+                        <SelectValue placeholder="Pilih kategori" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {categories?.map(cat => (
+                        <SelectItem key={cat.id} value={cat.id.toString()}>{cat.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )} />
+              <div className="flex gap-6">
+                <FormField control={videoForm.control} name="isFeatured" render={({ field }) => (
+                  <FormItem className="flex flex-row items-center space-x-2 space-y-0">
+                    <FormControl>
+                      <Checkbox 
+                        data-testid="checkbox-video-featured"
+                        checked={field.value} 
+                        onCheckedChange={field.onChange} 
+                      />
+                    </FormControl>
+                    <FormLabel className="font-normal">Featured</FormLabel>
+                  </FormItem>
+                )} />
+                <FormField control={videoForm.control} name="isVip" render={({ field }) => (
+                  <FormItem className="flex flex-row items-center space-x-2 space-y-0">
+                    <FormControl>
+                      <Checkbox 
+                        data-testid="checkbox-video-vip"
+                        checked={field.value} 
+                        onCheckedChange={field.onChange} 
+                      />
+                    </FormControl>
+                    <FormLabel className="font-normal">VIP Only</FormLabel>
+                  </FormItem>
+                )} />
+              </div>
+              <Button type="submit" className="w-full" data-testid="button-save-video" disabled={videoMutation.isPending}>
+                {videoMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Simpan
+              </Button>
             </form>
           </Form>
         </DialogContent>
       </Dialog>
       
-      {/* Episode Dialog */}
       <Dialog open={isEpisodeDialogOpen} onOpenChange={setIsEpisodeDialogOpen}>
         <DialogContent className="max-w-4xl overflow-y-auto max-h-[90vh]">
           <DialogHeader>
@@ -348,15 +744,35 @@ export default function AdminPage() {
             <Form {...episodeForm}>
               <form onSubmit={episodeForm.handleSubmit((data) => episodeMutation.mutate(data))} className="grid grid-cols-1 md:grid-cols-2 gap-4 border p-4 rounded-lg">
                 <FormField control={episodeForm.control} name="title" render={({ field }) => (
-                  <FormItem><FormLabel>Judul Episode</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                  <FormItem>
+                    <FormLabel>Judul Episode</FormLabel>
+                    <FormControl><Input data-testid="input-episode-title" {...field} /></FormControl>
+                    <FormMessage />
+                  </FormItem>
                 )} />
                 <FormField control={episodeForm.control} name="episodeNumber" render={({ field }) => (
-                  <FormItem><FormLabel>No. Episode</FormLabel><FormControl><Input type="number" {...field} onChange={e => field.onChange(parseInt(e.target.value))} /></FormControl><FormMessage /></FormItem>
+                  <FormItem>
+                    <FormLabel>No. Episode</FormLabel>
+                    <FormControl>
+                      <Input 
+                        data-testid="input-episode-number"
+                        type="number" 
+                        {...field} 
+                        onChange={e => field.onChange(parseInt(e.target.value) || 1)} 
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
                 )} />
                 <FormField control={episodeForm.control} name="sourceUrl" render={({ field }) => (
-                  <FormItem className="md:col-span-2"><FormLabel>Streaming Link (m3u8/mp4)</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                  <FormItem className="md:col-span-2">
+                    <FormLabel>Streaming Link (m3u8/mp4)</FormLabel>
+                    <FormControl><Input data-testid="input-episode-source" {...field} /></FormControl>
+                    <FormMessage />
+                  </FormItem>
                 )} />
-                <Button type="submit" className="md:col-span-2" disabled={episodeMutation.isPending}>
+                <Button type="submit" className="md:col-span-2" data-testid="button-save-episode" disabled={episodeMutation.isPending}>
+                  {episodeMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                   {editingEpisode ? "Update Episode" : "Tambah Episode"}
                 </Button>
               </form>
@@ -372,18 +788,21 @@ export default function AdminPage() {
               </TableHeader>
               <TableBody>
                 {episodes?.map((ep) => (
-                  <TableRow key={ep.id}>
+                  <TableRow key={ep.id} data-testid={`row-episode-${ep.id}`}>
                     <TableCell>{ep.episodeNumber}</TableCell>
                     <TableCell>{ep.title}</TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-2">
                         <Button 
                           variant="ghost" 
-                          size="icon" 
+                          size="icon"
+                          data-testid={`button-edit-episode-${ep.id}`}
                           onClick={() => { 
                             setEditingEpisode(ep); 
                             episodeForm.reset({
-                              ...ep,
+                              title: ep.title,
+                              episodeNumber: ep.episodeNumber,
+                              sourceUrl: ep.sourceUrl,
                               duration: ep.duration ?? 0,
                               thumbnailUrl: ep.thumbnailUrl ?? "",
                             }); 
@@ -391,18 +810,108 @@ export default function AdminPage() {
                         >
                           <Pencil className="h-4 w-4" />
                         </Button>
-                        <Button variant="ghost" size="icon" className="text-destructive">
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          className="text-destructive"
+                          data-testid={`button-delete-episode-${ep.id}`}
+                          onClick={() => setDeleteConfirm({ type: "episode", id: ep.id })}
+                        >
                           <Trash2 className="h-4 w-4" />
                         </Button>
                       </div>
                     </TableCell>
                   </TableRow>
                 ))}
+                {(!episodes || episodes.length === 0) && (
+                  <TableRow>
+                    <TableCell colSpan={3} className="text-center text-muted-foreground py-8">
+                      Belum ada episode.
+                    </TableCell>
+                  </TableRow>
+                )}
               </TableBody>
             </Table>
           </div>
         </DialogContent>
       </Dialog>
+
+      <Dialog open={isCategoryDialogOpen} onOpenChange={setIsCategoryDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{editingCategory ? "Edit Kategori" : "Tambah Kategori"}</DialogTitle>
+          </DialogHeader>
+          <Form {...categoryForm}>
+            <form onSubmit={categoryForm.handleSubmit((data) => categoryMutation.mutate(data))} className="space-y-4">
+              <FormField control={categoryForm.control} name="name" render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Nama</FormLabel>
+                  <FormControl><Input data-testid="input-category-name" {...field} /></FormControl>
+                  <FormMessage />
+                </FormItem>
+              )} />
+              <FormField control={categoryForm.control} name="slug" render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Slug</FormLabel>
+                  <FormControl><Input data-testid="input-category-slug" placeholder="contoh: drama-korea" {...field} /></FormControl>
+                  <FormMessage />
+                </FormItem>
+              )} />
+              <Button type="submit" className="w-full" data-testid="button-save-category" disabled={categoryMutation.isPending}>
+                {categoryMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Simpan
+              </Button>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isActorDialogOpen} onOpenChange={setIsActorDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{editingActor ? "Edit Aktor" : "Tambah Aktor"}</DialogTitle>
+          </DialogHeader>
+          <Form {...actorForm}>
+            <form onSubmit={actorForm.handleSubmit((data) => actorMutation.mutate(data))} className="space-y-4">
+              <FormField control={actorForm.control} name="name" render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Nama</FormLabel>
+                  <FormControl><Input data-testid="input-actor-name" {...field} /></FormControl>
+                  <FormMessage />
+                </FormItem>
+              )} />
+              <FormField control={actorForm.control} name="avatarUrl" render={({ field }) => (
+                <FormItem>
+                  <FormLabel>URL Foto</FormLabel>
+                  <FormControl><Input data-testid="input-actor-photo" placeholder="https://..." {...field} value={field.value || ""} /></FormControl>
+                  <FormMessage />
+                </FormItem>
+              )} />
+              <Button type="submit" className="w-full" data-testid="button-save-actor" disabled={actorMutation.isPending}>
+                {actorMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Simpan
+              </Button>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
+
+      <AlertDialog open={!!deleteConfirm} onOpenChange={(open) => !open && setDeleteConfirm(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Konfirmasi Hapus</AlertDialogTitle>
+            <AlertDialogDescription>
+              Apakah Anda yakin ingin menghapus item ini? Tindakan ini tidak dapat dibatalkan.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel data-testid="button-cancel-delete">Batal</AlertDialogCancel>
+            <AlertDialogAction data-testid="button-confirm-delete" onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Hapus
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
