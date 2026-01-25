@@ -161,46 +161,6 @@ export const watchlistRelations = relations(watchlist, ({ one }) => ({
   }),
 }));
 
-export const videoSourcesRelations = relations(videoSources, ({ one }) => ({
-  episode: one(episodes, {
-    fields: [videoSources.episodeId],
-    references: [episodes.id],
-  }),
-}));
-
-export const subtitlesRelations = relations(subtitles, ({ one }) => ({
-  episode: one(episodes, {
-    fields: [subtitles.episodeId],
-    references: [episodes.id],
-  }),
-}));
-
-export const watchHistoryRelations = relations(watchHistory, ({ one }) => ({
-  user: one(users, {
-    fields: [watchHistory.userId],
-    references: [users.id],
-  }),
-  video: one(videos, {
-    fields: [watchHistory.videoId],
-    references: [videos.id],
-  }),
-  episode: one(episodes, {
-    fields: [watchHistory.episodeId],
-    references: [episodes.id],
-  }),
-}));
-
-export const watchlistRelations = relations(watchlist, ({ one }) => ({
-  user: one(users, {
-    fields: [watchlist.userId],
-    references: [users.id],
-  }),
-  video: one(videos, {
-    fields: [watchlist.videoId],
-    references: [videos.id],
-  }),
-}));
-
 // === INSERTS & TYPES ===
 
 export const insertUserSchema = createInsertSchema(users).omit({ id: true, createdAt: true });
