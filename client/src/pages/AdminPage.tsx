@@ -53,6 +53,18 @@ export default function AdminPage() {
   const { user, isLoading: authLoading } = useAuth();
   const { toast } = useToast();
   
+  if (authLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (!user || !user.isAdmin) {
+    return <Redirect to="/admin/login" />;
+  }
+
   // States for Modals
   const [isVideoDialogOpen, setIsVideoDialogOpen] = useState(false);
   const [isEpisodeDialogOpen, setIsEpisodeDialogOpen] = useState(false);
@@ -64,7 +76,6 @@ export default function AdminPage() {
   const [editingActor, setEditingActor] = useState<Actor | null>(null);
   const [selectedVideoId, setSelectedVideoId] = useState<number | null>(null);
 
-  // Queries
   const { data: videos, isLoading: videosLoading } = useQuery<Video[]>({
     queryKey: ["/api/videos"],
   });
@@ -81,6 +92,14 @@ export default function AdminPage() {
     queryKey: ["/api/videos", selectedVideoId, "episodes"],
     enabled: !!selectedVideoId,
   });
+
+  if (videosLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   // Mutations
   const videoMutation = useMutation({
@@ -164,16 +183,12 @@ export default function AdminPage() {
     },
   });
 
-  if (authLoading || videosLoading) {
+  if (videosLoading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     );
-  }
-
-  if (!user || !user.isAdmin) {
-    return <Redirect to="/" />;
   }
 
   return (

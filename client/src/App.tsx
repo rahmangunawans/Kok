@@ -11,6 +11,7 @@ import VideoDetail from "@/pages/VideoDetail";
 import WatchPage from "@/pages/WatchPage";
 import ProfilePage from "@/pages/ProfilePage";
 import AdminPage from "@/pages/AdminPage";
+import AdminLogin from "@/pages/AdminLogin";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -25,6 +26,7 @@ function Router() {
       <Route path="/register" component={Home} />
       
       <Route path="/profile" component={ProfilePage} />
+      <Route path="/admin/login" component={AdminLogin} />
       <Route path="/admin" component={AdminPage} />
       
       <Route component={NotFound} />
