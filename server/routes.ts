@@ -148,6 +148,48 @@ export async function registerRoutes(
     res.status(201).json(category);
   });
 
+  app.patch("/api/categories/:id", async (req, res) => {
+    if (!req.isAuthenticated() || !(req.user as any).isAdmin) return res.status(401).send("Unauthorized");
+    const category = await storage.updateCategory(Number(req.params.id), req.body);
+    res.json(category);
+  });
+
+  app.delete("/api/categories/:id", async (req, res) => {
+    if (!req.isAuthenticated() || !(req.user as any).isAdmin) return res.status(401).send("Unauthorized");
+    await storage.deleteCategory(Number(req.params.id));
+    res.sendStatus(200);
+  });
+
+  app.post("/api/episodes", async (req, res) => {
+    if (!req.isAuthenticated() || !(req.user as any).isAdmin) return res.status(401).send("Unauthorized");
+    const episode = await storage.createEpisode(req.body);
+    res.status(201).json(episode);
+  });
+
+  // === Actors ===
+  app.get("/api/actors", async (req, res) => {
+    const actorsList = await storage.getActors();
+    res.json(actorsList);
+  });
+
+  app.post("/api/actors", async (req, res) => {
+    if (!req.isAuthenticated() || !(req.user as any).isAdmin) return res.status(401).send("Unauthorized");
+    const actor = await storage.createActor(req.body);
+    res.status(201).json(actor);
+  });
+
+  app.patch("/api/actors/:id", async (req, res) => {
+    if (!req.isAuthenticated() || !(req.user as any).isAdmin) return res.status(401).send("Unauthorized");
+    const actor = await storage.updateActor(Number(req.params.id), req.body);
+    res.json(actor);
+  });
+
+  app.delete("/api/actors/:id", async (req, res) => {
+    if (!req.isAuthenticated() || !(req.user as any).isAdmin) return res.status(401).send("Unauthorized");
+    await storage.deleteActor(Number(req.params.id));
+    res.sendStatus(200);
+  });
+
   // === Watchlist ===
   app.get(api.watchlist.list.path, async (req, res) => {
     if (!req.isAuthenticated()) return res.status(401).send("Unauthorized");

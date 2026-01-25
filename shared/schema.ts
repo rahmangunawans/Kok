@@ -75,6 +75,13 @@ export const watchHistory = pgTable("watch_history", {
   lastWatched: timestamp("last_watched").defaultNow(),
 });
 
+export const watchlist = pgTable("watchlist", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id),
+  videoId: integer("video_id").notNull().references(() => videos.id),
+  addedAt: timestamp("added_at").defaultNow(),
+});
+
 export const actors = pgTable("actors", {
   id: serial("id").primaryKey(),
   name: text("name").notNull(),
@@ -112,6 +119,46 @@ export const episodesRelations = relations(episodes, ({ one, many }) => ({
   sources: many(videoSources),
   subtitles: many(subtitles),
   watchHistory: many(watchHistory),
+}));
+
+export const videoSourcesRelations = relations(videoSources, ({ one }) => ({
+  episode: one(episodes, {
+    fields: [videoSources.episodeId],
+    references: [episodes.id],
+  }),
+}));
+
+export const subtitlesRelations = relations(subtitles, ({ one }) => ({
+  episode: one(episodes, {
+    fields: [subtitles.episodeId],
+    references: [episodes.id],
+  }),
+}));
+
+export const watchHistoryRelations = relations(watchHistory, ({ one }) => ({
+  user: one(users, {
+    fields: [watchHistory.userId],
+    references: [users.id],
+  }),
+  video: one(videos, {
+    fields: [watchHistory.videoId],
+    references: [videos.id],
+  }),
+  episode: one(episodes, {
+    fields: [watchHistory.episodeId],
+    references: [episodes.id],
+  }),
+}));
+
+export const watchlistRelations = relations(watchlist, ({ one }) => ({
+  user: one(users, {
+    fields: [watchlist.userId],
+    references: [users.id],
+  }),
+  video: one(videos, {
+    fields: [watchlist.videoId],
+    references: [videos.id],
+  }),
 }));
 
 export const videoSourcesRelations = relations(videoSources, ({ one }) => ({

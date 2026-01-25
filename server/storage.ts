@@ -1,9 +1,9 @@
 import { db } from "./db";
 import { 
-  users, videos, episodes, categories, watchHistory, watchlist, videoSources, subtitles,
+  users, videos, episodes, categories, watchHistory, watchlist, videoSources, subtitles, actors, videoActors,
   type User, type InsertUser, type Video, type InsertVideo, 
   type Episode, type InsertEpisode, type WatchHistory, type InsertWatchHistory,
-  type WatchlistItem, type Category
+  type WatchlistItem, type Category, type InsertCategory, type Actor, type InsertActor
 } from "@shared/schema";
 import { eq, desc, and, ilike } from "drizzle-orm";
 import session from "express-session";
@@ -135,6 +135,15 @@ export class DatabaseStorage implements IStorage {
     return episode;
   }
 
+  async updateEpisode(id: number, episode: Partial<InsertEpisode>): Promise<Episode | undefined> {
+    const [updated] = await db.update(episodes).set(episode).where(eq(episodes.id, id)).returning();
+    return updated;
+  }
+
+  async deleteEpisode(id: number): Promise<void> {
+    await db.delete(episodes).where(eq(episodes.id, id));
+  }
+
   // Categories
   async getCategories(): Promise<Category[]> {
     return await db.select().from(categories);
@@ -143,6 +152,53 @@ export class DatabaseStorage implements IStorage {
   async getCategoryBySlug(slug: string): Promise<Category | undefined> {
     const [category] = await db.select().from(categories).where(eq(categories.slug, slug));
     return category;
+  }
+
+  async createCategory(insertCategory: InsertCategory): Promise<Category> {
+    const [category] = await db.insert(categories).values(insertCategory).returning();
+    return category;
+  }
+
+  async updateCategory(id: number, category: Partial<InsertCategory>): Promise<Category | undefined> {
+    const [updated] = await db.update(categories).set(category).where(eq(categories.id, id)).returning();
+    return updated;
+  }
+
+  async deleteCategory(id: number): Promise<void> {
+    await db.delete(categories).where(eq(categories.id, id));
+  }
+
+  // Actors
+  async getActors(): Promise<Actor[]> {
+    return await db.select().from(actors);
+  }
+
+  async createActor(insertActor: InsertActor): Promise<Actor> {
+    const [actor] = await db.insert(actors).values(insertActor).returning();
+    return actor;
+  }
+
+  async updateActor(id: number, actor: Partial<InsertActor>): Promise<Actor | undefined> {
+    const [updated] = await db.update(actors).set(actor).where(eq(actors.id, id)).returning();
+    return updated;
+  }
+
+  async deleteActor(id: number): Promise<void> {
+    await db.delete(actors).where(eq(actors.id, id));
+  }
+
+  async createActor(insertActor: InsertActor): Promise<Actor> {
+    const [actor] = await db.insert(actors).values(insertActor).returning();
+    return actor;
+  }
+
+  async updateActor(id: number, actor: Partial<InsertActor>): Promise<Actor | undefined> {
+    const [updated] = await db.update(actors).set(actor).where(eq(actors.id, id)).returning();
+    return updated;
+  }
+
+  async deleteActor(id: number): Promise<void> {
+    await db.delete(actors).where(eq(actors.id, id));
   }
 
   // Watch History
