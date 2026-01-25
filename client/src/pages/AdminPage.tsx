@@ -194,7 +194,7 @@ export default function AdminPage() {
                           <FormLabel>Kategori</FormLabel>
                           <Select 
                             onValueChange={(val) => field.onChange(Number(val))} 
-                            value={field.value?.toString() || ""}
+                            value={field.value !== undefined ? String(field.value) : ""}
                           >
                             <FormControl>
                               <SelectTrigger>
