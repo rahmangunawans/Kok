@@ -22,6 +22,8 @@ export interface IStorage {
   getVideos(category?: string, search?: string, featured?: boolean): Promise<Video[]>;
   getVideo(id: number): Promise<Video | undefined>;
   createVideo(video: InsertVideo): Promise<Video>;
+  updateVideo(id: number, video: Partial<InsertVideo>): Promise<Video | undefined>;
+  deleteVideo(id: number): Promise<void>;
   
   // Episodes
   getEpisodes(videoId: number): Promise<Episode[]>;
@@ -100,6 +102,15 @@ export class DatabaseStorage implements IStorage {
   async createVideo(insertVideo: InsertVideo): Promise<Video> {
     const [video] = await db.insert(videos).values(insertVideo).returning();
     return video;
+  }
+
+  async updateVideo(id: number, video: Partial<InsertVideo>): Promise<Video | undefined> {
+    const [updated] = await db.update(videos).set(video).where(eq(videos.id, id)).returning();
+    return updated;
+  }
+
+  async deleteVideo(id: number): Promise<void> {
+    await db.delete(videos).where(eq(videos.id, id));
   }
 
   // Episodes

@@ -91,6 +91,21 @@ export async function registerRoutes(
     res.status(201).json(video);
   });
 
+  app.patch("/api/videos/:id", async (req, res) => {
+    if (!req.isAuthenticated()) return res.status(401).send("Unauthorized");
+    const id = Number(req.params.id);
+    const video = await storage.updateVideo(id, req.body);
+    if (!video) return res.status(404).json({ message: "Video not found" });
+    res.json(video);
+  });
+
+  app.delete("/api/videos/:id", async (req, res) => {
+    if (!req.isAuthenticated()) return res.status(401).send("Unauthorized");
+    const id = Number(req.params.id);
+    await storage.deleteVideo(id);
+    res.sendStatus(200);
+  });
+
   // === Episodes ===
   app.get(api.episodes.list.path, async (req, res) => {
     const episodes = await storage.getEpisodes(Number(req.params.videoId));
