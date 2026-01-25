@@ -194,6 +194,24 @@ export async function registerRoutes(
     res.sendStatus(200);
   });
 
+  // === Video Actors ===
+  app.get("/api/videos/:videoId/actors", async (req, res) => {
+    const actors = await storage.getVideoActors(Number(req.params.videoId));
+    res.json(actors);
+  });
+
+  app.post("/api/videos/:videoId/actors", async (req, res) => {
+    if (!req.isAuthenticated() || !(req.user as any).isAdmin) return res.status(401).send("Unauthorized");
+    await storage.addActorToVideo(Number(req.params.videoId), req.body.actorId);
+    res.sendStatus(201);
+  });
+
+  app.delete("/api/videos/:videoId/actors/:actorId", async (req, res) => {
+    if (!req.isAuthenticated() || !(req.user as any).isAdmin) return res.status(401).send("Unauthorized");
+    await storage.removeActorFromVideo(Number(req.params.videoId), Number(req.params.actorId));
+    res.sendStatus(200);
+  });
+
   // === Watchlist ===
   app.get(api.watchlist.list.path, async (req, res) => {
     if (!req.isAuthenticated()) return res.status(401).send("Unauthorized");

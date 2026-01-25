@@ -82,6 +82,7 @@ export default function AdminPage() {
   const [isCategoryDialogOpen, setIsCategoryDialogOpen] = useState(false);
   const [isActorDialogOpen, setIsActorDialogOpen] = useState(false);
   const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
+  const [isVideoActorsDialogOpen, setIsVideoActorsDialogOpen] = useState(false);
   
   const [editingVideo, setEditingVideo] = useState<Video | null>(null);
   const [editingEpisode, setEditingEpisode] = useState<Episode | null>(null);
@@ -111,6 +112,11 @@ export default function AdminPage() {
   const { data: episodes } = useQuery<Episode[]>({
     queryKey: ["/api/videos", selectedVideoId, "episodes"],
     enabled: !!selectedVideoId,
+  });
+
+  const { data: videoActors } = useQuery<Actor[]>({
+    queryKey: ["/api/videos", selectedVideoId, "actors"],
+    enabled: !!selectedVideoId && isVideoActorsDialogOpen,
   });
 
   const videoMutation = useMutation({
@@ -213,6 +219,26 @@ export default function AdminPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/actors"] });
       toast({ title: "Berhasil", description: "Aktor telah dihapus" });
+    },
+  });
+
+  const addActorToVideoMutation = useMutation({
+    mutationFn: async (actorId: number) => {
+      await apiRequest("POST", `/api/videos/${selectedVideoId}/actors`, { actorId });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/videos", selectedVideoId, "actors"] });
+      toast({ title: "Berhasil", description: "Aktor ditambahkan ke video" });
+    },
+  });
+
+  const removeActorFromVideoMutation = useMutation({
+    mutationFn: async (actorId: number) => {
+      await apiRequest("DELETE", `/api/videos/${selectedVideoId}/actors/${actorId}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/videos", selectedVideoId, "actors"] });
+      toast({ title: "Berhasil", description: "Aktor dihapus dari video" });
     },
   });
 
@@ -383,10 +409,9 @@ export default function AdminPage() {
         </div>
 
         <Tabs defaultValue="videos" className="w-full">
-          <TabsList className="grid w-full grid-cols-3 max-w-md">
+          <TabsList className="grid w-full grid-cols-2 max-w-md">
             <TabsTrigger value="videos" data-testid="tab-videos">Videos</TabsTrigger>
             <TabsTrigger value="categories" data-testid="tab-categories">Categories</TabsTrigger>
-            <TabsTrigger value="actors" data-testid="tab-actors">Actors</TabsTrigger>
           </TabsList>
 
           <TabsContent value="videos" className="space-y-4">
@@ -478,6 +503,17 @@ export default function AdminPage() {
                               }}
                             >
                               <List className="h-4 w-4" />
+                            </Button>
+                            <Button 
+                              variant="ghost" 
+                              size="icon"
+                              data-testid={`button-actors-${video.id}`}
+                              onClick={() => { 
+                                setSelectedVideoId(video.id); 
+                                setIsVideoActorsDialogOpen(true); 
+                              }}
+                            >
+                              <Users className="h-4 w-4" />
                             </Button>
                             <Button 
                               variant="ghost" 
@@ -597,82 +633,6 @@ export default function AdminPage() {
             </Card>
           </TabsContent>
 
-          <TabsContent value="actors" className="space-y-4">
-            <div className="flex justify-end pt-4">
-              <Button 
-                data-testid="button-add-actor"
-                onClick={() => { 
-                  setEditingActor(null); 
-                  actorForm.reset({ name: "", avatarUrl: "" }); 
-                  setIsActorDialogOpen(true); 
-                }} 
-                className="gap-2"
-              >
-                <Plus className="h-4 w-4" /> Tambah Aktor
-              </Button>
-            </div>
-            <Card>
-              <CardContent className="p-0">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Foto</TableHead>
-                      <TableHead>Nama</TableHead>
-                      <TableHead className="text-right">Aksi</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {actors?.map(actor => (
-                      <TableRow key={actor.id} data-testid={`row-actor-${actor.id}`}>
-                        <TableCell>
-                          {actor.avatarUrl && (
-                            <img 
-                              src={actor.avatarUrl} 
-                              alt={actor.name} 
-                              className="w-10 h-10 object-cover rounded-full"
-                            />
-                          )}
-                        </TableCell>
-                        <TableCell className="font-medium">{actor.name}</TableCell>
-                        <TableCell className="text-right">
-                          <div className="flex justify-end gap-2">
-                            <Button 
-                              variant="ghost" 
-                              size="icon"
-                              data-testid={`button-edit-actor-${actor.id}`}
-                              onClick={() => { 
-                                setEditingActor(actor); 
-                                actorForm.reset({ name: actor.name, avatarUrl: actor.avatarUrl || "" }); 
-                                setIsActorDialogOpen(true); 
-                              }}
-                            >
-                              <Pencil className="h-4 w-4" />
-                            </Button>
-                            <Button 
-                              variant="ghost" 
-                              size="icon" 
-                              className="text-destructive"
-                              data-testid={`button-delete-actor-${actor.id}`}
-                              onClick={() => setDeleteConfirm({ type: "actor", id: actor.id })}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                    {(!actors || actors.length === 0) && (
-                      <TableRow>
-                        <TableCell colSpan={3} className="text-center text-muted-foreground py-8">
-                          Belum ada aktor.
-                        </TableCell>
-                      </TableRow>
-                    )}
-                  </TableBody>
-                </Table>
-              </CardContent>
-            </Card>
-          </TabsContent>
         </Tabs>
       </div>
 
@@ -987,6 +947,84 @@ export default function AdminPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <Dialog open={isVideoActorsDialogOpen} onOpenChange={setIsVideoActorsDialogOpen}>
+        <DialogContent className="max-w-2xl overflow-y-auto max-h-[90vh]">
+          <DialogHeader>
+            <DialogTitle>Kelola Aktor - {videos?.find(v => v.id === selectedVideoId)?.title}</DialogTitle>
+          </DialogHeader>
+          
+          <div className="space-y-6 pt-4">
+            <div className="space-y-2">
+              <p className="text-sm font-medium">Aktor saat ini:</p>
+              <div className="flex flex-wrap gap-2">
+                {videoActors?.map((actor) => (
+                  <Badge 
+                    key={actor.id} 
+                    variant="secondary" 
+                    className="flex items-center gap-1 pr-1"
+                    data-testid={`badge-video-actor-${actor.id}`}
+                  >
+                    {actor.avatarUrl && (
+                      <img src={actor.avatarUrl} alt={actor.name} className="w-5 h-5 rounded-full object-cover" />
+                    )}
+                    {actor.name}
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-5 w-5 ml-1"
+                      data-testid={`button-remove-actor-${actor.id}`}
+                      onClick={() => removeActorFromVideoMutation.mutate(actor.id)}
+                    >
+                      <Trash2 className="h-3 w-3" />
+                    </Button>
+                  </Badge>
+                ))}
+                {(!videoActors || videoActors.length === 0) && (
+                  <p className="text-sm text-muted-foreground">Belum ada aktor ditambahkan</p>
+                )}
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <p className="text-sm font-medium">Tambah aktor:</p>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-2 max-h-[300px] overflow-y-auto">
+                {actors?.filter(a => !videoActors?.some(va => va.id === a.id)).map((actor) => (
+                  <Card 
+                    key={actor.id} 
+                    className="hover-elevate cursor-pointer p-2"
+                    onClick={() => addActorToVideoMutation.mutate(actor.id)}
+                    data-testid={`card-add-actor-${actor.id}`}
+                  >
+                    <div className="flex items-center gap-2">
+                      {actor.avatarUrl && (
+                        <img src={actor.avatarUrl} alt={actor.name} className="w-8 h-8 rounded-full object-cover" />
+                      )}
+                      <span className="text-sm font-medium truncate">{actor.name}</span>
+                      <Plus className="h-4 w-4 ml-auto text-muted-foreground" />
+                    </div>
+                  </Card>
+                ))}
+              </div>
+            </div>
+
+            <div className="border-t pt-4">
+              <Button 
+                variant="outline" 
+                className="gap-2"
+                data-testid="button-create-new-actor"
+                onClick={() => { 
+                  setEditingActor(null); 
+                  actorForm.reset({ name: "", avatarUrl: "" }); 
+                  setIsActorDialogOpen(true); 
+                }}
+              >
+                <Plus className="h-4 w-4" /> Buat Aktor Baru
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={isImportDialogOpen} onOpenChange={setIsImportDialogOpen}>
         <DialogContent className="max-w-3xl overflow-y-auto max-h-[90vh]">

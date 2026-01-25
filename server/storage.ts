@@ -187,18 +187,23 @@ export class DatabaseStorage implements IStorage {
     await db.delete(actors).where(eq(actors.id, id));
   }
 
-  async createActor(insertActor: InsertActor): Promise<Actor> {
-    const [actor] = await db.insert(actors).values(insertActor).returning();
-    return actor;
+  // Video Actors
+  async getVideoActors(videoId: number): Promise<Actor[]> {
+    const result = await db.select({ actor: actors })
+      .from(videoActors)
+      .innerJoin(actors, eq(videoActors.actorId, actors.id))
+      .where(eq(videoActors.videoId, videoId));
+    return result.map(r => r.actor);
   }
 
-  async updateActor(id: number, actor: Partial<InsertActor>): Promise<Actor | undefined> {
-    const [updated] = await db.update(actors).set(actor).where(eq(actors.id, id)).returning();
-    return updated;
+  async addActorToVideo(videoId: number, actorId: number): Promise<void> {
+    await db.insert(videoActors).values({ videoId, actorId }).onConflictDoNothing();
   }
 
-  async deleteActor(id: number): Promise<void> {
-    await db.delete(actors).where(eq(actors.id, id));
+  async removeActorFromVideo(videoId: number, actorId: number): Promise<void> {
+    await db.delete(videoActors).where(
+      and(eq(videoActors.videoId, videoId), eq(videoActors.actorId, actorId))
+    );
   }
 
   // Watch History
