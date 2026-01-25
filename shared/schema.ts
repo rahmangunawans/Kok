@@ -94,6 +94,10 @@ export const videoActors = pgTable("video_actors", {
   actorId: integer("actor_id").notNull().references(() => actors.id),
 });
 
+export const insertActorSchema = createInsertSchema(actors).omit({ id: true });
+export type Actor = typeof actors.$inferSelect;
+export type InsertActor = z.infer<typeof insertActorSchema>;
+
 // === RELATIONS ===
 
 export const usersRelations = relations(users, ({ many }) => ({

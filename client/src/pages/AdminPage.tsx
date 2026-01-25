@@ -384,7 +384,18 @@ export default function AdminPage() {
                     <TableCell>{ep.title}</TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-2">
-                        <Button variant="ghost" size="icon" onClick={() => { setEditingEpisode(ep); episodeForm.reset(ep); }}>
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          onClick={() => { 
+                            setEditingEpisode(ep); 
+                            episodeForm.reset({
+                              ...ep,
+                              duration: ep.duration ?? 0,
+                              thumbnailUrl: ep.thumbnailUrl ?? "",
+                            }); 
+                          }}
+                        >
                           <Pencil className="h-4 w-4" />
                         </Button>
                         <Button variant="ghost" size="icon" className="text-destructive">
