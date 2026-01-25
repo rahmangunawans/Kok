@@ -171,8 +171,27 @@ export async function registerRoutes(
   
   // Seed Data Endpoint (Auto-run on start typically, but exposed here for testing)
   await seedData();
+  await createAdminUser();
 
   return httpServer;
+}
+
+async function createAdminUser() {
+  const adminUsername = "admin";
+  const existingAdmin = await storage.getUserByUsername(adminUsername);
+  
+  if (!existingAdmin) {
+    console.log("Creating admin user...");
+    const { hashPassword } = await import("./auth");
+    const hashedPassword = await hashPassword("admin123");
+    await storage.createUser({
+      username: adminUsername,
+      password: hashedPassword,
+      isAdmin: true,
+      avatarUrl: null
+    });
+    console.log("Admin user created: admin / admin123");
+  }
 }
 
 async function seedData() {
