@@ -75,11 +75,16 @@ export const watchHistory = pgTable("watch_history", {
   lastWatched: timestamp("last_watched").defaultNow(),
 });
 
-export const watchlist = pgTable("watchlist", {
+export const actors = pgTable("actors", {
   id: serial("id").primaryKey(),
-  userId: integer("user_id").notNull().references(() => users.id),
+  name: text("name").notNull(),
+  avatarUrl: text("avatar_url"),
+});
+
+export const videoActors = pgTable("video_actors", {
+  id: serial("id").primaryKey(),
   videoId: integer("video_id").notNull().references(() => videos.id),
-  addedAt: timestamp("added_at").defaultNow(),
+  actorId: integer("actor_id").notNull().references(() => actors.id),
 });
 
 // === RELATIONS ===

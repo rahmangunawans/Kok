@@ -29,10 +29,15 @@ export interface IStorage {
   getEpisodes(videoId: number): Promise<Episode[]>;
   getEpisode(id: number): Promise<Episode | undefined>;
   createEpisode(episode: InsertEpisode): Promise<Episode>;
+  updateEpisode(id: number, episode: Partial<InsertEpisode>): Promise<Episode | undefined>;
+  deleteEpisode(id: number): Promise<void>;
   
   // Categories
   getCategories(): Promise<Category[]>;
   getCategoryBySlug(slug: string): Promise<Category | undefined>;
+  createCategory(category: InsertCategory): Promise<Category>;
+  updateCategory(id: number, category: Partial<InsertCategory>): Promise<Category | undefined>;
+  deleteCategory(id: number): Promise<void>;
   
   // User Data
   getWatchHistory(userId: number): Promise<(WatchHistory & { video: Video, episode: Episode })[]>;

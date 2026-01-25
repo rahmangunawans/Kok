@@ -123,10 +123,29 @@ export async function registerRoutes(
     res.json({ ...episode, sources, subtitles: subs });
   });
 
+  app.patch("/api/episodes/:id", async (req, res) => {
+    if (!req.isAuthenticated() || !(req.user as any).isAdmin) return res.status(401).send("Unauthorized");
+    const id = Number(req.params.id);
+    const episode = await storage.updateEpisode(id, req.body);
+    res.json(episode);
+  });
+
+  app.delete("/api/episodes/:id", async (req, res) => {
+    if (!req.isAuthenticated() || !(req.user as any).isAdmin) return res.status(401).send("Unauthorized");
+    await storage.deleteEpisode(Number(req.params.id));
+    res.sendStatus(200);
+  });
+
   // === Categories ===
   app.get(api.categories.list.path, async (req, res) => {
     const categories = await storage.getCategories();
     res.json(categories);
+  });
+
+  app.post("/api/categories", async (req, res) => {
+    if (!req.isAuthenticated() || !(req.user as any).isAdmin) return res.status(401).send("Unauthorized");
+    const category = await storage.createCategory(req.body);
+    res.status(201).json(category);
   });
 
   // === Watchlist ===
