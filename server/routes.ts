@@ -12,7 +12,8 @@ import { eq } from "drizzle-orm";
 import { hashPassword } from "./auth";
 
 // @ts-ignore
-import { mdl } from "mdl-scraper";
+import mdlScraper from "mdl-scraper";
+const mdl = mdlScraper.mdl;
 
 export async function registerRoutes(
   httpServer: Server,

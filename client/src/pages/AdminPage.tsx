@@ -55,10 +55,23 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Loader2, Plus, Pencil, Trash2, LayoutDashboard, Film, Tag, Users, Play, List } from "lucide-react";
+import { Loader2, Plus, Pencil, Trash2, LayoutDashboard, Film, Tag, Users, Play, List, Search, Download } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { Redirect } from "wouter";
+
+interface ExternalSearchResult {
+  id: string | number;
+  title: string;
+  titleEnglish?: string;
+  synopsis?: string;
+  posterUrl?: string;
+  rating?: number;
+  year?: number;
+  episodes?: number;
+  type?: string;
+  source: "mal" | "mdl";
+}
 
 export default function AdminPage() {
   const { user, isLoading: authLoading } = useAuth();
@@ -68,6 +81,7 @@ export default function AdminPage() {
   const [isEpisodeDialogOpen, setIsEpisodeDialogOpen] = useState(false);
   const [isCategoryDialogOpen, setIsCategoryDialogOpen] = useState(false);
   const [isActorDialogOpen, setIsActorDialogOpen] = useState(false);
+  const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
   
   const [editingVideo, setEditingVideo] = useState<Video | null>(null);
   const [editingEpisode, setEditingEpisode] = useState<Episode | null>(null);
@@ -76,6 +90,11 @@ export default function AdminPage() {
   const [selectedVideoId, setSelectedVideoId] = useState<number | null>(null);
 
   const [deleteConfirm, setDeleteConfirm] = useState<{ type: string; id: number } | null>(null);
+  
+  const [importSource, setImportSource] = useState<"mal" | "mdl">("mal");
+  const [importSearchQuery, setImportSearchQuery] = useState("");
+  const [importSearchResults, setImportSearchResults] = useState<ExternalSearchResult[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
 
   const { data: videos, isLoading: videosLoading } = useQuery<Video[]>({
     queryKey: ["/api/videos"],
@@ -250,6 +269,50 @@ export default function AdminPage() {
     setDeleteConfirm(null);
   };
 
+  const handleExternalSearch = async () => {
+    if (!importSearchQuery.trim()) return;
+    
+    setIsSearching(true);
+    try {
+      const endpoint = importSource === "mal" 
+        ? `/api/external/mal/search?q=${encodeURIComponent(importSearchQuery)}`
+        : `/api/external/mdl/search?q=${encodeURIComponent(importSearchQuery)}`;
+      
+      const res = await fetch(endpoint);
+      if (!res.ok) throw new Error("Search failed");
+      
+      const data = await res.json();
+      setImportSearchResults(data);
+    } catch (error) {
+      toast({ title: "Error", description: "Gagal mencari data", variant: "destructive" });
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
+  const handleImportResult = (result: ExternalSearchResult) => {
+    const animeCat = categories?.find(c => c.slug === "anime");
+    const dramaCat = categories?.find(c => c.slug === "drama");
+    
+    videoForm.reset({
+      title: result.title,
+      description: result.synopsis || "",
+      posterUrl: result.posterUrl || "",
+      bannerUrl: result.posterUrl || "",
+      rating: result.rating || 0,
+      year: result.year || new Date().getFullYear(),
+      country: result.source === "mal" ? "Japan" : "Korea",
+      categoryId: result.source === "mal" ? animeCat?.id : dramaCat?.id,
+      isFeatured: false,
+      isVip: false,
+    });
+    
+    setIsImportDialogOpen(false);
+    setEditingVideo(null);
+    setIsVideoDialogOpen(true);
+    toast({ title: "Data diimpor", description: "Silakan review dan simpan video" });
+  };
+
   if (authLoading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
@@ -327,7 +390,19 @@ export default function AdminPage() {
           </TabsList>
 
           <TabsContent value="videos" className="space-y-4">
-            <div className="flex justify-end pt-4">
+            <div className="flex justify-end gap-2 pt-4">
+              <Button 
+                data-testid="button-import-video"
+                variant="outline"
+                onClick={() => { 
+                  setImportSearchQuery("");
+                  setImportSearchResults([]);
+                  setIsImportDialogOpen(true); 
+                }} 
+                className="gap-2"
+              >
+                <Download className="h-4 w-4" /> Import dari MAL/MDL
+              </Button>
               <Button 
                 data-testid="button-add-video"
                 onClick={() => { 
@@ -912,6 +987,92 @@ export default function AdminPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <Dialog open={isImportDialogOpen} onOpenChange={setIsImportDialogOpen}>
+        <DialogContent className="max-w-3xl overflow-y-auto max-h-[90vh]">
+          <DialogHeader>
+            <DialogTitle>Import dari MyAnimeList / MyDramaList</DialogTitle>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            <div className="flex gap-2">
+              <Select value={importSource} onValueChange={(v: "mal" | "mdl") => setImportSource(v)}>
+                <SelectTrigger className="w-[200px]" data-testid="select-import-source">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="mal">MyAnimeList</SelectItem>
+                  <SelectItem value="mdl">MyDramaList</SelectItem>
+                </SelectContent>
+              </Select>
+              
+              <div className="flex-1 flex gap-2">
+                <Input 
+                  data-testid="input-import-search"
+                  placeholder={importSource === "mal" ? "Cari anime..." : "Cari drama..."}
+                  value={importSearchQuery}
+                  onChange={(e) => setImportSearchQuery(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && handleExternalSearch()}
+                />
+                <Button 
+                  data-testid="button-import-search"
+                  onClick={handleExternalSearch} 
+                  disabled={isSearching}
+                >
+                  {isSearching ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
+                </Button>
+              </div>
+            </div>
+            
+            {importSearchResults.length > 0 && (
+              <div className="space-y-2">
+                <p className="text-sm text-muted-foreground">Hasil pencarian:</p>
+                <div className="grid gap-2 max-h-[400px] overflow-y-auto">
+                  {importSearchResults.map((result) => (
+                    <Card 
+                      key={`${result.source}-${result.id}`} 
+                      className="hover-elevate cursor-pointer"
+                      onClick={() => handleImportResult(result)}
+                      data-testid={`card-import-result-${result.id}`}
+                    >
+                      <CardContent className="p-3 flex gap-3">
+                        {result.posterUrl && (
+                          <img 
+                            src={result.posterUrl} 
+                            alt={result.title}
+                            className="w-16 h-24 object-cover rounded"
+                          />
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <h4 className="font-medium truncate">{result.title}</h4>
+                          {result.titleEnglish && result.titleEnglish !== result.title && (
+                            <p className="text-sm text-muted-foreground truncate">{result.titleEnglish}</p>
+                          )}
+                          <div className="flex gap-2 mt-1 flex-wrap">
+                            {result.year && <Badge variant="secondary">{result.year}</Badge>}
+                            {result.rating && <Badge variant="secondary">{result.rating}/10</Badge>}
+                            {result.type && <Badge variant="outline">{result.type}</Badge>}
+                            <Badge>{result.source === "mal" ? "MAL" : "MDL"}</Badge>
+                          </div>
+                          {result.synopsis && (
+                            <p className="text-xs text-muted-foreground mt-2 line-clamp-2">{result.synopsis}</p>
+                          )}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              </div>
+            )}
+            
+            {importSearchResults.length === 0 && !isSearching && importSearchQuery && (
+              <p className="text-center text-muted-foreground py-8">
+                Tidak ada hasil ditemukan. Coba kata kunci lain.
+              </p>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
