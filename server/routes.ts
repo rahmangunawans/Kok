@@ -359,7 +359,7 @@ export async function registerRoutes(
         id: req.params.slug,
         title: data.title,
         synopsis: data.synopsis,
-        posterUrl: data.posterUrl || data.poster,
+        posterUrl: data.posterUrl,
         rating: data.rating,
         country: data.country,
         year: data.year,
