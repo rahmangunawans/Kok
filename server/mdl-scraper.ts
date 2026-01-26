@@ -3,26 +3,37 @@ import * as cheerio from 'cheerio';
 
 const BASE_URL = "https://mydramalist.com";
 
+// Advanced headers to mimic a real browser more closely
 const HEADERS = {
-  'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-  'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
-  'Accept-Language': 'en-US,en;q=0.9',
-  'Accept-Encoding': 'gzip, deflate, br',
-  'Connection': 'keep-alive',
-  'Upgrade-Insecure-Requests': '1',
-  'Cache-Control': 'max-age=0',
+  'authority': 'mydramalist.com',
+  'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
+  'accept-language': 'en-US,en;q=0.9',
+  'cache-control': 'max-age=0',
+  'sec-ch-ua': '"Not_A Brand";v="8", "Chromium";v="120", "Google Chrome";v="120"',
+  'sec-ch-ua-mobile': '?0',
+  'sec-ch-ua-platform': '"Windows"',
+  'sec-fetch-dest': 'document',
+  'sec-fetch-mode': 'navigate',
+  'sec-fetch-site': 'none',
+  'sec-fetch-user': '?1',
+  'upgrade-insecure-requests': '1',
+  'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
 };
 
+// Use a proxy service or a different approach if 403 persists. 
+// For now, let's try to rotate the User-Agent or use a more specific search URL.
 export const mdl = {
   async SearchQuery(query: string) {
     try {
-      const searchUrl = `${BASE_URL}/search?q=${encodeURIComponent(query)}`;
+      // MDL sometimes blocks the /search?q= endpoint more aggressively.
+      // Let's try to add some randomness or a referer.
+      const searchUrl = `${BASE_URL}/search?q=${encodeURIComponent(query)}&t=d`;
       const response = await axios.get(searchUrl, {
         headers: {
           ...HEADERS,
-          'Referer': 'https://www.google.com/'
+          'referer': 'https://www.google.com/',
         },
-        timeout: 15000
+        timeout: 10000
       });
 
       const $ = cheerio.load(response.data);
@@ -54,11 +65,17 @@ export const mdl = {
         });
       });
 
+      if (results.length === 0 && response.data.includes('Just a moment')) {
+        throw new Error("Cloudflare protection active (403).");
+      }
+
       return { dramas: results };
     } catch (error: any) {
       console.error("MDL Search Error (Axios):", error.message);
-      if (error.response?.status === 403) {
-        throw new Error("Akses diblokir oleh MyDramaList (403). Silakan coba lagi nanti.");
+      if (error.response?.status === 403 || error.message.includes('403')) {
+        // Fallback: If 403, we can't do much without a proxy or a real browser (Puppeteer).
+        // Since we are in a limited environment, we inform the user.
+        throw new Error("Akses ke MyDramaList dibatasi oleh Cloudflare. Coba lagi dalam beberapa menit atau gunakan judul pencarian yang lebih spesifik.");
       }
       throw error;
     }
@@ -67,7 +84,13 @@ export const mdl = {
   async FetchQuery(slug: string) {
     try {
       const dramaUrl = `${BASE_URL}/${slug}`;
-      const response = await axios.get(dramaUrl, { headers: HEADERS, timeout: 15000 });
+      const response = await axios.get(dramaUrl, { 
+        headers: {
+          ...HEADERS,
+          'referer': BASE_URL
+        }, 
+        timeout: 10000 
+      });
       const $ = cheerio.load(response.data);
 
       const title = $('h1.film-title').text().trim() || 'N/A';
