@@ -45,34 +45,41 @@ export const mdl = {
     try {
       console.log(`Fetching MDL drama: ${slug}`);
       const response = (await client.getDrama(slug)) as any;
+      console.log("MDL Fetch raw response success:", response.success);
       
       if (!response.success) {
         throw new Error(response.error || "Fetch failed");
       }
 
       // Based on test script: response.result.data
-      const drama = response.result?.data || response.result;
+      // Let's log the structure more clearly to debug
+      console.log("MDL Response Result Structure:", JSON.stringify(Object.keys(response.result || {})));
+      
+      const resultData = response.result?.data || response.result;
+      const drama = resultData?.data || resultData;
+      
       if (!drama) throw new Error("Drama data not found in response");
 
       console.log("MDL Drama raw data keys:", Object.keys(drama));
+      if (drama.data) console.log("MDL Drama nested data keys:", Object.keys(drama.data));
 
       return {
         id: slug,
-        title: drama.title || drama.complete_title || drama.name,
-        synopsis: drama.synopsis || drama.description || drama.plot || drama.data?.synopsis,
-        posterUrl: drama.poster || drama.image || drama.thumb || drama.poster_url,
-        rating: drama.rating ? parseFloat(drama.rating) : (drama.score ? parseFloat(drama.score) : null),
-        country: drama.country || drama.location || drama.data?.country,
-        year: drama.year || drama.release_year || (drama.aired ? new Date(drama.aired).getFullYear() : null),
-        type: drama.type,
-        status: drama.status || drama.state,
-        episodes: drama.episodes || drama.total_episodes,
-        genres: drama.genres || drama.data?.genres || [],
-        tags: drama.tags || drama.data?.tags || [],
-        cast: (drama.casts || drama.cast || drama.data?.casts || []).map((c: any) => ({
-          name: c.name,
-          character: c.role || c.character,
-          image: c.profile_image || c.image || c.thumb
+        title: drama.title || drama.complete_title || drama.name || drama.data?.title,
+        synopsis: drama.synopsis || drama.description || drama.plot || drama.data?.synopsis || drama.data?.description || drama.details?.synopsis,
+        posterUrl: drama.poster || drama.image || drama.thumb || drama.poster_url || drama.data?.poster || drama.details?.poster,
+        rating: drama.rating ? parseFloat(drama.rating) : (drama.score ? parseFloat(drama.score) : (drama.data?.rating ? parseFloat(drama.data.rating) : (drama.details?.rating ? parseFloat(drama.details.rating) : null))),
+        country: drama.country || drama.location || drama.data?.country || drama.details?.country,
+        year: drama.year || drama.release_year || (drama.aired ? new Date(drama.aired).getFullYear() : (drama.data?.year || drama.details?.year || null)),
+        type: drama.type || drama.data?.type || drama.details?.type,
+        status: drama.status || drama.state || drama.data?.status || drama.details?.status,
+        episodes: drama.episodes || drama.total_episodes || drama.data?.episodes || drama.details?.episodes,
+        genres: drama.genres || drama.data?.genres || drama.details?.genres || [],
+        tags: drama.tags || drama.data?.tags || drama.details?.tags || [],
+        cast: (drama.casts || drama.cast || drama.data?.casts || drama.details?.casts || []).map((c: any) => ({
+          name: c.name || c.full_name,
+          character: c.role || c.character || c.role_name,
+          image: c.profile_image || c.image || c.thumb || c.poster
         })),
         source: "mdl"
       };

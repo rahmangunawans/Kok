@@ -316,19 +316,33 @@ export default function AdminPage() {
     }
   };
 
-  const handleImportResult = (result: ExternalSearchResult) => {
-    const animeCat = categories?.find(c => c.slug === "anime");
-    const dramaCat = categories?.find(c => c.slug === "drama");
+  const handleImportResult = async (result: ExternalSearchResult) => {
+    const animeCat = categories?.find(c => (c as Category).slug === "anime");
+    const dramaCat = categories?.find(c => (c as Category).slug === "drama");
+    
+    // If it's MDL and we don't have a synopsis, fetch details first
+    let finalResult: any = { ...result };
+    if (result.source === "mdl" && !result.synopsis) {
+      try {
+        toast({ title: "Mohon tunggu", description: "Mengambil detail drama..." });
+        const res = await fetch(`/api/external/mdl/${result.id}`);
+        if (res.ok) {
+          finalResult = await res.json();
+        }
+      } catch (error) {
+        console.error("Failed to fetch MDL details during import:", error);
+      }
+    }
     
     videoForm.reset({
-      title: result.title,
-      description: result.synopsis || "",
-      posterUrl: result.posterUrl || "",
-      bannerUrl: result.posterUrl || "",
-      rating: result.rating || 0,
-      year: result.year || new Date().getFullYear(),
-      country: result.source === "mal" ? "Japan" : "Korea",
-      categoryId: result.source === "mal" ? animeCat?.id : dramaCat?.id,
+      title: finalResult.title,
+      description: finalResult.synopsis || "",
+      posterUrl: finalResult.posterUrl || "",
+      bannerUrl: finalResult.posterUrl || "",
+      rating: finalResult.rating || 0,
+      year: finalResult.year || new Date().getFullYear(),
+      country: finalResult.source === "mal" ? "Japan" : (finalResult.country || "Korea"),
+      categoryId: finalResult.source === "mal" ? animeCat?.id : dramaCat?.id,
       isFeatured: false,
       isVip: false,
     });

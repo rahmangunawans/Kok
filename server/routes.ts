@@ -333,11 +333,13 @@ export async function registerRoutes(
       const results = data.dramas?.map((drama: any) => ({
         id: drama.slug,
         title: drama.title,
-        posterUrl: drama.thumb,
+        posterUrl: drama.thumb || drama.posterUrl,
         url: drama.url,
         ranking: drama.ranking,
         type: drama.type,
         year: drama.year,
+        rating: drama.rating,
+        synopsis: drama.synopsis,
         source: "mdl"
       })) || [];
       
