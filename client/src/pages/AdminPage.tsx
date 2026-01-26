@@ -340,7 +340,7 @@ export default function AdminPage() {
       posterUrl: finalResult.posterUrl || "",
       bannerUrl: finalResult.posterUrl || "",
       rating: finalResult.rating || 0,
-      year: finalResult.year || new Date().getFullYear(),
+      year: parseInt(finalResult.year) || new Date().getFullYear(),
       country: finalResult.source === "mal" ? "Japan" : (finalResult.country || "Korea"),
       categoryId: finalResult.source === "mal" ? animeCat?.id : dramaCat?.id,
       isFeatured: false,

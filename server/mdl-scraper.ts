@@ -70,7 +70,7 @@ export const mdl = {
         posterUrl: drama.poster || drama.image || drama.thumb || drama.poster_url || drama.data?.poster || drama.details?.poster,
         rating: drama.rating ? parseFloat(drama.rating) : (drama.score ? parseFloat(drama.score) : (drama.data?.rating ? parseFloat(drama.data.rating) : (drama.details?.rating ? parseFloat(drama.details.rating) : null))),
         country: drama.country || drama.location || drama.data?.country || drama.details?.country,
-        year: drama.year || drama.release_year || (drama.aired ? new Date(drama.aired).getFullYear() : (drama.data?.year || drama.details?.year || null)),
+        year: drama.year || drama.release_year || (drama.aired ? new Date(drama.aired).getFullYear() : (drama.data?.year || drama.details?.year || (drama.release_date ? new Date(drama.release_date).getFullYear() : null))),
         type: drama.type || drama.data?.type || drama.details?.type,
         status: drama.status || drama.state || drama.data?.status || drama.details?.status,
         episodes: drama.episodes || drama.total_episodes || drama.data?.episodes || drama.details?.episodes,
