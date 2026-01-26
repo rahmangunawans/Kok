@@ -67,6 +67,8 @@ export const mdl = {
         type: drama.type,
         status: drama.status || drama.state,
         episodes: drama.episodes || drama.total_episodes,
+        genres: drama.genres || drama.data?.genres || [],
+        tags: drama.tags || drama.data?.tags || [],
         cast: (drama.casts || drama.cast || drama.data?.casts || []).map((c: any) => ({
           name: c.name,
           character: c.role || c.character,
