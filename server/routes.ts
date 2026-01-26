@@ -272,6 +272,7 @@ export async function registerRoutes(
         posterUrl: anime.images?.jpg?.large_image_url || anime.images?.jpg?.image_url,
         rating: anime.score,
         year: anime.year || (anime.aired?.from ? new Date(anime.aired.from).getFullYear() : null),
+        country: "Japan",
         episodes: anime.episodes,
         status: anime.status,
         type: anime.type,
@@ -305,6 +306,7 @@ export async function registerRoutes(
         bannerUrl: anime.images?.jpg?.large_image_url,
         rating: anime.score,
         year: anime.year || (anime.aired?.from ? new Date(anime.aired.from).getFullYear() : null),
+        country: "Japan", // MAL is specifically for Japanese media
         episodes: anime.episodes,
         status: anime.status,
         type: anime.type,
@@ -357,8 +359,13 @@ export async function registerRoutes(
         id: req.params.slug,
         title: data.title,
         synopsis: data.synopsis,
-        posterUrl: data.poster,
+        posterUrl: data.posterUrl || data.poster,
         rating: data.rating,
+        country: data.country,
+        year: data.year,
+        type: data.type,
+        status: data.status,
+        episodes: data.episodes,
         cast: data.cast || [],
         source: "mdl"
       });

@@ -59,7 +59,12 @@ export const mdl = {
         title: drama.title || drama.complete_title || drama.name,
         synopsis: drama.synopsis || drama.description || drama.plot,
         posterUrl: drama.poster || drama.image || drama.thumb,
-        rating: drama.rating,
+        rating: drama.rating ? parseFloat(drama.rating) : null,
+        country: drama.country || drama.location,
+        year: drama.year || drama.release_year,
+        type: drama.type,
+        status: drama.status || drama.state,
+        episodes: drama.episodes || drama.total_episodes,
         cast: (drama.casts || drama.cast || []).map((c: any) => ({
           name: c.name,
           character: c.role || c.character,
