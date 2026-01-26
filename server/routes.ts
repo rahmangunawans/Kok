@@ -367,6 +367,8 @@ export async function registerRoutes(
         status: data.status,
         episodes: data.episodes,
         cast: data.cast || [],
+        genres: data.genres || [],
+        tags: data.tags || [],
         source: "mdl"
       });
     } catch (error) {
