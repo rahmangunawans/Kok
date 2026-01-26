@@ -14,11 +14,12 @@ export const mdl = {
         throw new Error(response.error || "Search failed");
       }
       
-      // Based on test script:
-      // response.result.results.dramas is the array
+      // Based on test script: response.result.results.dramas
       let dramas = [];
       if (response.result?.results?.dramas && Array.isArray(response.result.results.dramas)) {
         dramas = response.result.results.dramas;
+      } else if (response.result?.dramas && Array.isArray(response.result.dramas)) {
+        dramas = response.result.dramas;
       } else if (Array.isArray(response.result)) {
         dramas = response.result;
       }
@@ -49,19 +50,20 @@ export const mdl = {
         throw new Error(response.error || "Fetch failed");
       }
 
-      const drama = response.result;
+      // Based on test script: response.result.data
+      const drama = response.result?.data || response.result;
       if (!drama) throw new Error("Drama data not found in response");
 
       return {
         id: slug,
-        title: drama.title || drama.name,
+        title: drama.title || drama.complete_title || drama.name,
         synopsis: drama.synopsis || drama.description || drama.plot,
-        posterUrl: drama.image || drama.thumb || drama.poster,
+        posterUrl: drama.poster || drama.image || drama.thumb,
         rating: drama.rating,
-        cast: (drama.cast || []).map((c: any) => ({
+        cast: (drama.casts || drama.cast || []).map((c: any) => ({
           name: c.name,
           character: c.role || c.character,
-          image: c.image || c.thumb
+          image: c.profile_image || c.image || c.thumb
         })),
         source: "mdl"
       };
