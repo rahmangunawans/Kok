@@ -270,6 +270,7 @@ export default function AdminPage() {
       categoryId: undefined as number | undefined,
       isFeatured: false,
       isVip: false,
+      trailerUrl: "",
     },
   });
 

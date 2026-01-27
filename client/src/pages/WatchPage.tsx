@@ -387,6 +387,28 @@ export default function WatchPage() {
               >
                 Next Episode <ChevronRight className="ml-2 h-4 w-4" />
               </Button>
+
+              {video?.trailerUrl && (
+                <Dialog>
+                  <DialogTrigger asChild>
+                    <Button variant="outline" className="border-primary/20 hover:bg-primary/5">
+                      <Play className="mr-2 h-4 w-4 fill-primary" /> Trailer
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="max-w-4xl p-0 bg-black border-white/10 overflow-hidden">
+                    <div className="aspect-video w-full">
+                      <iframe
+                        src={video.trailerUrl.includes('youtube.com') || video.trailerUrl.includes('youtu.be') 
+                          ? video.trailerUrl.replace('watch?v=', 'embed/').replace('youtu.be/', 'youtube.com/embed/')
+                          : video.trailerUrl}
+                        className="w-full h-full"
+                        allowFullScreen
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                      />
+                    </div>
+                  </DialogContent>
+                </Dialog>
+              )}
             </div>
 
             <div className="pt-6">
