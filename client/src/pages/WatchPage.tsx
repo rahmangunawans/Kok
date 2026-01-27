@@ -161,13 +161,15 @@ export default function WatchPage() {
 
   // Initialize Shaka Player
   useEffect(() => {
-    if (!currentEpisode?.id || !videoRef.current || !videoContainerRef.current) return;
+    const currentEpId = currentEpisode?.id;
+    if (!currentEpId || !videoRef.current || !videoContainerRef.current) return;
 
     let ui: any = null;
     let isMounted = true;
 
     const initPlayer = async () => {
-      if (!videoRef.current || !videoContainerRef.current || !currentEpisode) return;
+      const ep = currentEpisode;
+      if (!videoRef.current || !videoContainerRef.current || !ep) return;
 
       try {
         // @ts-ignore
@@ -202,8 +204,8 @@ export default function WatchPage() {
         };
         ui.configure(uiConfig);
 
-        const sources = currentEpisode.sources || [];
-        const manifestUrl = currentEpisode.sourceUrl || (sources.length > 0 ? sources[0].url : null);
+        const sources = ep.sources || [];
+        const manifestUrl = ep.sourceUrl || (sources.length > 0 ? sources[0].url : null);
         
         player.configure({
           manifest: { retryParameters: { maxAttempts: 5 } },
@@ -228,8 +230,8 @@ export default function WatchPage() {
             }
           }
 
-          if (currentEpisode.subtitles?.length) {
-            for (const sub of currentEpisode.subtitles) {
+          if (ep.subtitles?.length) {
+            for (const sub of ep.subtitles) {
               try {
                 await player.addTextTrackAsync(sub.url, sub.language.toLowerCase(), 'subtitles', 'application/x-subrip', null, sub.language === "ID" ? "Indonesian" : "English");
               } catch (e) {}
@@ -256,7 +258,7 @@ export default function WatchPage() {
       playerRef.current = null;
       shakaPlayerRef.current = null;
     };
-  }, [currentEpisode.id]); // Strict dependency on ID only
+  }, [currentEpisode?.id]); // Use optional chaining in dependency array if needed
 
   const handleProgress = useCallback(() => {
     const video = videoRef.current;
