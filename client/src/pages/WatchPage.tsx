@@ -1,6 +1,8 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { useParams, Link, useLocation } from "wouter";
 import { useVideo, useEpisode, useEpisodes, useUpdateHistory, useVideos } from "@/hooks/use-videos";
+import { useQuery } from "@tanstack/react-query";
+import { Actor } from "@shared/schema";
 import * as shaka from "shaka-player/dist/shaka-player.ui.js";
 import "shaka-player/dist/controls.css";
 import { Loader2, ChevronLeft, ChevronRight, List, Star, Play, Settings } from "lucide-react";
@@ -27,6 +29,9 @@ export default function WatchPage() {
   const { data: video, isLoading: loadingVideo } = useVideo(vId);
   const { data: currentEpisode, isLoading: loadingEpisode, error: episodeError } = useEpisode(eId);
   const { data: allEpisodes } = useEpisodes(vId);
+  const { data: actors } = useQuery<Actor[]>({
+    queryKey: ["/api/videos", vId, "actors"],
+  });
   const { data: relatedVideos } = useVideos({ category: video?.categoryId?.toString() });
   const { user } = useAuth();
   const { mutate: updateHistory } = useUpdateHistory();
@@ -156,7 +161,7 @@ export default function WatchPage() {
 
   // Initialize Shaka Player
   useEffect(() => {
-    if (!currentEpisode || !videoRef.current || !videoContainerRef.current) return;
+    if (!currentEpisode?.id || !videoRef.current || !videoContainerRef.current) return;
 
     let ui: any = null;
     let isMounted = true;
@@ -387,6 +392,31 @@ export default function WatchPage() {
                 {video?.description}
               </p>
             </div>
+
+            {/* Actors Section */}
+            {actors && actors.length > 0 && (
+              <div className="pt-10 space-y-6">
+                <h3 className="text-xl font-display font-bold">Cast / Actors</h3>
+                <ScrollArea className="w-full whitespace-nowrap pb-4">
+                  <div className="flex space-x-6">
+                    {actors.map((actor) => (
+                      <div key={actor.id} className="flex flex-col items-center gap-2 group">
+                        <div className="w-16 h-16 md:w-20 md:h-20 rounded-full overflow-hidden border-2 border-white/5 group-hover:border-primary/50 transition-colors">
+                          <img 
+                            src={actor.avatarUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${actor.name}`} 
+                            alt={actor.name}
+                            className="w-full h-full object-cover transition-transform group-hover:scale-110"
+                          />
+                        </div>
+                        <span className="text-xs font-medium text-center truncate w-20">
+                          {actor.name}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </ScrollArea>
+              </div>
+            )}
 
             <div className="pt-10 space-y-6">
               <div className="flex items-center justify-between">
