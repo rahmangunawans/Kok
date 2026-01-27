@@ -390,6 +390,75 @@ export async function registerRoutes(
     }
   });
 
+  // Fetch and Sync Episodes from External Sources (MAL/MDL)
+  app.post("/api/episodes/sync-external", async (req, res) => {
+    if (!req.isAuthenticated() || !(req.user as any).isAdmin) return res.status(401).send("Unauthorized");
+    
+    const { videoId, externalId, source } = req.body;
+    if (!videoId || !externalId || !source) {
+      return res.status(400).json({ message: "Missing required fields" });
+    }
+
+    try {
+      let episodesToCreate = [];
+      
+      if (source === "mal") {
+        // Fetch episodes from Jikan API
+        const response = await fetch(`https://api.jikan.moe/v4/anime/${externalId}/episodes`);
+        const data = await response.json();
+        
+        if (data.data) {
+          episodesToCreate = data.data.map((ep: any) => ({
+            videoId,
+            title: ep.title || `Episode ${ep.mal_id}`,
+            episodeNumber: ep.mal_id,
+            sourceUrl: "#", // Placeholder
+            duration: null,
+            thumbnailUrl: null
+          }));
+        }
+      } else if (source === "mdl") {
+        // MDL episodes are usually just a count in the basic fetch
+        // We might need to just generate placeholders if MDL doesn't provide individual ep titles in Search/Fetch easily
+        const data = await mdl.FetchQuery(externalId);
+        const epCount = parseInt(data.episodes) || 0;
+        
+        for (let i = 1; i <= epCount; i++) {
+          episodesToCreate.push({
+            videoId,
+            title: `Episode ${i}`,
+            episodeNumber: i,
+            sourceUrl: "#", // Placeholder
+            duration: null,
+            thumbnailUrl: null
+          });
+        }
+      }
+
+      // Filter out existing episodes to avoid duplicates
+      const existingEpisodes = await storage.getEpisodes(videoId);
+      const existingNumbers = new Set(existingEpisodes.map(ep => ep.episodeNumber));
+      
+      const newEpisodes = episodesToCreate.filter((ep: any) => !existingNumbers.has(ep.episodeNumber));
+      
+      if (newEpisodes.length > 0) {
+        // Insert episodes one by one or batch if storage supports it
+        // storage.ts typically has createEpisode
+        for (const ep of newEpisodes) {
+          await storage.createEpisode(ep);
+        }
+      }
+
+      res.json({ 
+        message: `Synced ${newEpisodes.length} new episodes`,
+        totalAdded: newEpisodes.length 
+      });
+    } catch (error) {
+      console.error("Sync episodes error:", error);
+      res.status(500).json({ message: "Failed to sync episodes from external source" });
+    }
+  });
+
   // Seed Data Endpoint (Auto-run on start typically, but exposed here for testing)
   await seedData();
   await createAdminUser();

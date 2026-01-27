@@ -114,6 +114,42 @@ export default function AdminPage() {
     enabled: !!selectedVideoId,
   });
 
+  const syncEpisodesMutation = useMutation({
+    mutationFn: async () => {
+      const video = videos?.find(v => v.id === selectedVideoId);
+      if (!video) throw new Error("Video not found");
+
+      // Logic to determine externalId and source
+      // We'll try to find it from description or title, but ideally it should be stored in the video record
+      // For now, we'll prompt or assume based on source mapping if we had one
+      // Since we don't have a field for externalId yet, we'll use a simple heuristic or prompt
+      
+      const source = video.country === "Japan" ? "mal" : "mdl";
+      const query = video.title;
+      
+      // Search first to get ID if not known
+      const searchRes = await fetch(`/api/external/${source}/search?q=${encodeURIComponent(query)}`);
+      const searchData = await searchRes.json();
+      const bestMatch = searchData[0];
+      
+      if (!bestMatch) throw new Error("No match found on external source");
+
+      const res = await apiRequest("POST", "/api/episodes/sync-external", {
+        videoId: selectedVideoId,
+        externalId: bestMatch.id,
+        source
+      });
+      return res.json();
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/videos", selectedVideoId, "episodes"] });
+      toast({ title: "Berhasil", description: data.message });
+    },
+    onError: (error: any) => {
+      toast({ title: "Gagal", description: error.message || "Gagal sinkronisasi episode", variant: "destructive" });
+    }
+  });
+
   const { data: videoActors } = useQuery<Actor[]>({
     queryKey: ["/api/videos", selectedVideoId, "actors"],
     enabled: !!selectedVideoId && isVideoActorsDialogOpen,
