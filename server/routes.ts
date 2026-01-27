@@ -346,7 +346,8 @@ export async function registerRoutes(
         throw new Error((response as any).error || "Search failed");
       }
       
-      const results = (response as any).data.dramas?.map((drama: any) => ({
+      const dramas = (response as any).data?.dramas || (response as any).data?.results?.dramas || [];
+      const results = dramas.map((drama: any) => ({
         id: drama.slug,
         title: drama.title,
         posterUrl: drama.thumb,
@@ -357,7 +358,7 @@ export async function registerRoutes(
         rating: drama.rating,
         synopsis: drama.synopsis,
         source: "mdl"
-      })) || [];
+      }));
       
       res.json(results);
     } catch (error) {
@@ -380,7 +381,8 @@ export async function registerRoutes(
       
       // Fetch cast separately since getDramaEpisodes doesn't provide it
       const castResponse = await kuryana.getDramaCast(req.params.slug);
-      const cast = castResponse.success ? (castResponse as any).data.casts.map((c: any) => ({
+      const castData = (castResponse as any).data;
+      const cast = castResponse.success && castData?.casts ? castData.casts.map((c: any) => ({
         name: c.name,
         image: c.thumb,
         role: c.role
@@ -438,8 +440,9 @@ export async function registerRoutes(
       } else if (source === "mdl") {
         // Use Kuryana for MDL episodes
         const response = await kuryana.getDramaEpisodes(externalId);
-        if (response.success && (response as any).data.episodes) {
-          episodesToCreate = (response as any).data.episodes.map((ep: any, index: number) => ({
+        const dramaData = (response as any).data;
+        if (response.success && dramaData?.episodes) {
+          episodesToCreate = dramaData.episodes.map((ep: any, index: number) => ({
             videoId,
             title: ep.title || `Episode ${index + 1}`,
             episodeNumber: index + 1,
