@@ -12,7 +12,9 @@ import { eq } from "drizzle-orm";
 import { hashPassword } from "./auth";
 
 // @ts-ignore
-import { mdl } from "./mdl-scraper";
+import { Kuryana } from "@tbdhdev/kuryana-ts";
+
+const kuryana = new Kuryana();
 
 export async function registerRoutes(
   httpServer: Server,
@@ -339,12 +341,15 @@ export async function registerRoutes(
     if (!query) return res.status(400).json({ message: "Query is required" });
     
     try {
-      const data = await mdl.SearchQuery(query);
+      const response = await kuryana.search(query);
+      if (!response.success) {
+        throw new Error((response as any).error || "Search failed");
+      }
       
-      const results = data.dramas?.map((drama: any) => ({
+      const results = (response as any).data.dramas?.map((drama: any) => ({
         id: drama.slug,
         title: drama.title,
-        posterUrl: drama.thumb || drama.posterUrl,
+        posterUrl: drama.thumb,
         url: drama.url,
         ranking: drama.ranking,
         type: drama.type,
@@ -366,22 +371,35 @@ export async function registerRoutes(
     if (!req.isAuthenticated() || !(req.user as any).isAdmin) return res.status(401).send("Unauthorized");
     
     try {
-      const data = await mdl.FetchQuery(req.params.slug);
+      const response = await kuryana.getDramaEpisodes(req.params.slug);
+      if (!response.success) {
+        throw new Error((response as any).error || "Fetch failed");
+      }
       
+      const dramaData = (response as any).data;
+      
+      // Fetch cast separately since getDramaEpisodes doesn't provide it
+      const castResponse = await kuryana.getDramaCast(req.params.slug);
+      const cast = castResponse.success ? (castResponse as any).data.casts.map((c: any) => ({
+        name: c.name,
+        image: c.thumb,
+        role: c.role
+      })) : [];
+
       res.json({
         id: req.params.slug,
-        title: data.title,
-        synopsis: data.synopsis,
-        posterUrl: data.posterUrl,
-        rating: data.rating,
-        country: data.country,
-        year: data.year,
-        type: data.type,
-        status: data.status,
-        episodes: data.episodes,
-        cast: data.cast || [],
-        genres: data.genres || [],
-        tags: data.tags || [],
+        title: dramaData.title,
+        synopsis: dramaData.synopsis,
+        posterUrl: dramaData.posterUrl,
+        rating: dramaData.rating,
+        country: dramaData.country,
+        year: dramaData.year,
+        type: dramaData.type,
+        status: dramaData.status,
+        episodes: dramaData.episodes?.length || 0,
+        cast: cast,
+        genres: [],
+        tags: [],
         source: "mdl"
       });
     } catch (error) {
@@ -418,20 +436,17 @@ export async function registerRoutes(
           }));
         }
       } else if (source === "mdl") {
-        // MDL episodes are usually just a count in the basic fetch
-        // We might need to just generate placeholders if MDL doesn't provide individual ep titles in Search/Fetch easily
-        const data = await mdl.FetchQuery(externalId);
-        const epCount = parseInt(data.episodes) || 0;
-        
-        for (let i = 1; i <= epCount; i++) {
-          episodesToCreate.push({
+        // Use Kuryana for MDL episodes
+        const response = await kuryana.getDramaEpisodes(externalId);
+        if (response.success && (response as any).data.episodes) {
+          episodesToCreate = (response as any).data.episodes.map((ep: any, index: number) => ({
             videoId,
-            title: `Episode ${i}`,
-            episodeNumber: i,
+            title: ep.title || `Episode ${index + 1}`,
+            episodeNumber: index + 1,
             sourceUrl: "#", // Placeholder
             duration: null,
             thumbnailUrl: null
-          });
+          }));
         }
       }
 
