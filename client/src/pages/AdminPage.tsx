@@ -124,7 +124,22 @@ export default function AdminPage() {
       const method = editingVideo ? "PATCH" : "POST";
       const url = editingVideo ? `/api/videos/${editingVideo.id}` : "/api/videos";
       const res = await apiRequest(method, url, data);
-      return res.json();
+      const video = await res.json();
+
+      // If this was a new video from import, link the pending actors
+      const pendingActors = (window as any)._pendingImportActors;
+      if (!editingVideo && video.id && pendingActors && Array.isArray(pendingActors)) {
+        for (const actorId of pendingActors) {
+          try {
+            await apiRequest("POST", `/api/videos/${video.id}/actors`, { actorId });
+          } catch (e) {
+            console.error("Failed to link actor to video:", actorId, e);
+          }
+        }
+        delete (window as any)._pendingImportActors;
+      }
+      
+      return video;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/videos"] });
@@ -322,6 +337,8 @@ export default function AdminPage() {
     
     // If it's MDL or MAL, fetch details first
     let finalResult: any = { ...result };
+    const importedActorIds: number[] = [];
+
     if (result.source === "mdl" || result.source === "mal") {
       try {
         const typeLabel = result.source === "mdl" ? "drama" : "anime";
@@ -336,14 +353,20 @@ export default function AdminPage() {
             for (const actorData of finalResult.cast) {
               try {
                 // Check if actor already exists (basic name match)
+                let actorId: number;
                 const existingActor = actors?.find(a => a.name.toLowerCase() === actorData.name.toLowerCase());
                 
                 if (!existingActor) {
-                  await apiRequest("POST", "/api/actors", {
+                  const actorRes = await apiRequest("POST", "/api/actors", {
                     name: actorData.name,
                     avatarUrl: actorData.image || ""
                   });
+                  const newActor = await actorRes.json();
+                  actorId = newActor.id;
+                } else {
+                  actorId = existingActor.id;
                 }
+                importedActorIds.push(actorId);
               } catch (e) {
                 console.error("Failed to import actor:", actorData.name, e);
               }
@@ -357,6 +380,9 @@ export default function AdminPage() {
       }
     }
     
+    // Store imported actor IDs to be used after video creation
+    (window as any)._pendingImportActors = importedActorIds;
+
     videoForm.reset({
       title: finalResult.title,
       description: finalResult.synopsis || "",
