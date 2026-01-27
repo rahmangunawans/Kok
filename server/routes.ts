@@ -342,11 +342,15 @@ export async function registerRoutes(
     
     try {
       const response = await kuryana.search(query);
+      console.log("MDL Search response:", JSON.stringify(response));
+      
       if (!response.success) {
         throw new Error((response as any).error || "Search failed");
       }
       
-      const dramas = (response as any).data?.dramas || (response as any).data?.results?.dramas || [];
+      const dramaData = (response as any).data;
+      const dramas = dramaData?.dramas || dramaData?.results?.dramas || [];
+      
       const results = dramas.map((drama: any) => ({
         id: drama.slug,
         title: drama.title,
@@ -373,6 +377,8 @@ export async function registerRoutes(
     
     try {
       const response = await kuryana.getDramaEpisodes(req.params.slug);
+      console.log("MDL Detail response:", JSON.stringify(response));
+      
       if (!response.success) {
         throw new Error((response as any).error || "Fetch failed");
       }
@@ -440,15 +446,19 @@ export async function registerRoutes(
       } else if (source === "mdl") {
         // Use Kuryana for MDL episodes
         const response = await kuryana.getDramaEpisodes(externalId);
-        const dramaData = (response as any).data;
-        if (response.success && dramaData?.episodes) {
-          episodesToCreate = dramaData.episodes.map((ep: any, index: number) => ({
+        console.log("Sync MDL episodes response:", JSON.stringify(response));
+        
+        if (response.success) {
+          const dramaData = (response as any).data;
+          const episodesList = dramaData?.episodes || [];
+          
+          episodesToCreate = episodesList.map((ep: any, index: number) => ({
             videoId,
-            title: ep.title || `Episode ${index + 1}`,
-            episodeNumber: index + 1,
+            title: ep.title || ep.name || `Episode ${index + 1}`,
+            episodeNumber: ep.episode_number || ep.episode || (index + 1),
             sourceUrl: "#", // Placeholder
             duration: null,
-            thumbnailUrl: null
+            thumbnailUrl: ep.thumb || ep.thumbnail || null
           }));
         }
       }
