@@ -887,6 +887,24 @@ export default function AdminPage() {
           <DialogHeader>
             <DialogTitle>Kelola Episode - {videos?.find(v => v.id === selectedVideoId)?.title}</DialogTitle>
           </DialogHeader>
+
+          <div className="flex justify-between items-center mb-4 pt-4 px-4">
+            <h3 className="text-lg font-semibold">Daftar Episode</h3>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="gap-2"
+              onClick={() => syncEpisodesMutation.mutate()}
+              disabled={syncEpisodesMutation.isPending}
+            >
+              {syncEpisodesMutation.isPending ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Download className="h-4 w-4" />
+              )}
+              Auto Fetch Episodes
+            </Button>
+          </div>
           
           <div className="space-y-6 pt-4">
             <Form {...episodeForm}>
