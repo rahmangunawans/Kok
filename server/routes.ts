@@ -348,8 +348,9 @@ export async function registerRoutes(
         throw new Error((response as any).error || "Search failed");
       }
       
-      const dramaData = (response as any).data;
-      const dramas = dramaData?.dramas || dramaData?.results?.dramas || [];
+      // Based on index.test.ts: expect(res.result.results.dramas.length).toBeGreaterThan(0);
+      const resultsData = (response as any).result?.results || (response as any).data?.results || (response as any).data;
+      const dramas = resultsData?.dramas || [];
       
       const results = dramas.map((drama: any) => ({
         id: drama.slug,
@@ -383,22 +384,44 @@ export async function registerRoutes(
         throw new Error((response as any).error || "Fetch failed");
       }
       
-      const dramaData = (response as any).data;
+      // Based on index.test.ts: expect(res.result.data.episodes.length).toBeGreaterThan(0);
+      const dramaData = (response as any).result?.data || (response as any).data;
       
-      // Fetch cast separately since getDramaEpisodes doesn't provide it
+      // Fetch cast separately
       const castResponse = await kuryana.getDramaCast(req.params.slug);
-      const castData = (castResponse as any).data;
-      const cast = castResponse.success && castData?.casts ? castData.casts.map((c: any) => ({
-        name: c.name,
-        image: c.thumb,
-        role: c.role
-      })) : [];
+      // Based on index.test.ts: expect(res.result.data.casts['Main Role'].length).toBeGreaterThan(0);
+      const castWrapper = (castResponse as any).result?.data || (castResponse as any).data;
+      
+      let cast = [];
+      if (castWrapper?.casts) {
+        // Handle both array and object structures for casts
+        if (Array.isArray(castWrapper.casts)) {
+          cast = castWrapper.casts.map((c: any) => ({
+            name: c.name,
+            image: c.thumb,
+            role: c.role
+          }));
+        } else {
+          // Flatten object categories like 'Main Role', 'Support Role'
+          Object.values(castWrapper.casts).forEach((roleGroup: any) => {
+            if (Array.isArray(roleGroup)) {
+              roleGroup.forEach((c: any) => {
+                cast.push({
+                  name: c.name,
+                  image: c.thumb,
+                  role: c.role
+                });
+              });
+            }
+          });
+        }
+      }
 
       res.json({
         id: req.params.slug,
         title: dramaData.title,
         synopsis: dramaData.synopsis,
-        posterUrl: dramaData.posterUrl,
+        posterUrl: dramaData.posterUrl || dramaData.thumb,
         rating: dramaData.rating,
         country: dramaData.country,
         year: dramaData.year,
@@ -449,7 +472,8 @@ export async function registerRoutes(
         console.log("Sync MDL episodes response:", JSON.stringify(response));
         
         if (response.success) {
-          const dramaData = (response as any).data;
+          // According to index.test.ts, data is in res.result.data
+          const dramaData = (response as any).result?.data || (response as any).data;
           const episodesList = dramaData?.episodes || [];
           
           episodesToCreate = episodesList.map((ep: any, index: number) => ({
