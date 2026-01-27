@@ -36,6 +36,7 @@ export const videos = pgTable("videos", {
   seoTitle: text("seo_title"),
   seoDescription: text("seo_description"),
   ogImage: text("og_image"),
+  trailerUrl: text("trailer_url"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 

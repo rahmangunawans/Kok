@@ -320,12 +320,13 @@ export default function AdminPage() {
     const animeCat = categories?.find(c => (c as Category).slug === "anime");
     const dramaCat = categories?.find(c => (c as Category).slug === "drama");
     
-    // If it's MDL and we don't have a synopsis, fetch details first
+    // If it's MDL or MAL, fetch details first
     let finalResult: any = { ...result };
-    if (result.source === "mdl") {
+    if (result.source === "mdl" || result.source === "mal") {
       try {
-        toast({ title: "Mohon tunggu", description: "Mengambil detail drama..." });
-        const res = await fetch(`/api/external/mdl/${result.id}`);
+        const typeLabel = result.source === "mdl" ? "drama" : "anime";
+        toast({ title: "Mohon tunggu", description: `Mengambil detail ${typeLabel}...` });
+        const res = await fetch(`/api/external/${result.source}/${result.id}`);
         if (res.ok) {
           finalResult = await res.json();
           
@@ -336,32 +337,23 @@ export default function AdminPage() {
               try {
                 // Check if actor already exists (basic name match)
                 const existingActor = actors?.find(a => a.name.toLowerCase() === actorData.name.toLowerCase());
-                let actorId: number;
                 
-                if (existingActor) {
-                  actorId = existingActor.id;
-                } else {
-                  const actorRes = await apiRequest("POST", "/api/actors", {
+                if (!existingActor) {
+                  await apiRequest("POST", "/api/actors", {
                     name: actorData.name,
                     avatarUrl: actorData.image || ""
                   });
-                  const newActor = await actorRes.json();
-                  actorId = newActor.id;
-                  // Update local cache manually for subsequent iterations
-                  queryClient.invalidateQueries({ queryKey: ["/api/actors"] });
                 }
-                
-                // Note: We can't link to video yet because video isn't created.
-                // We'll store the imported actor IDs to link after video creation
-                // For simplicity in this fast edit, we just ensure actors exist in database
               } catch (e) {
                 console.error("Failed to import actor:", actorData.name, e);
               }
             }
+            // Invalidate after all actors are processed
+            queryClient.invalidateQueries({ queryKey: ["/api/actors"] });
           }
         }
       } catch (error) {
-        console.error("Failed to fetch MDL details during import:", error);
+        console.error(`Failed to fetch ${result.source} details during import:`, error);
       }
     }
     
@@ -369,14 +361,15 @@ export default function AdminPage() {
       title: finalResult.title,
       description: finalResult.synopsis || "",
       posterUrl: finalResult.posterUrl || "",
-      bannerUrl: finalResult.posterUrl || "",
+      bannerUrl: finalResult.bannerUrl || "",
       rating: finalResult.rating || 0,
       year: parseInt(finalResult.year) || new Date().getFullYear(),
       country: finalResult.source === "mal" ? "Japan" : (finalResult.country || "Korea"),
       categoryId: finalResult.source === "mal" ? animeCat?.id : dramaCat?.id,
       isFeatured: false,
       isVip: false,
-    });
+      trailerUrl: finalResult.trailerUrl || "",
+    } as any);
     
     setIsImportDialogOpen(false);
     setEditingVideo(null);

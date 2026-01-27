@@ -1,10 +1,17 @@
 import { useParams, Link } from "wouter";
 import { useVideo, useEpisodes, useAddToWatchlist } from "@/hooks/use-videos";
 import { useAuth } from "@/hooks/use-auth";
-import { Loader2, Play, Plus, Check, Star, Share2 } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { Actor } from "@shared/schema";
+import { Loader2, Play, Plus, Check, Star, Share2, Film } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
+import {
+  Dialog,
+  DialogContent,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 
 export default function VideoDetail() {
@@ -12,6 +19,9 @@ export default function VideoDetail() {
   const videoId = Number(id);
   const { data: video, isLoading: loadingVideo } = useVideo(videoId);
   const { data: episodes, isLoading: loadingEpisodes } = useEpisodes(videoId);
+  const { data: actors } = useQuery<Actor[]>({
+    queryKey: ["/api/videos", videoId, "actors"],
+  });
   const { user } = useAuth();
   const { mutate: addToWatchlist, isPending: addingToWatchlist } = useAddToWatchlist();
 
@@ -85,7 +95,7 @@ export default function VideoDetail() {
               <div className="flex flex-wrap items-center gap-4 text-sm md:text-base text-muted-foreground">
                 <div className="flex items-center text-amber-400 font-bold">
                   <Star className="w-4 h-4 mr-1 fill-amber-400" />
-                  {video.rating.toFixed(1)}
+                  {(video.rating || 0).toFixed(1)}
                 </div>
                 <span>•</span>
                 <span>{video.year}</span>
@@ -103,7 +113,7 @@ export default function VideoDetail() {
             </p>
 
             {/* Actions */}
-            <div className="flex gap-4">
+            <div className="flex flex-wrap gap-4">
               {episodes && episodes.length > 0 && (
                 <Link href={`/watch/${video.id}/${episodes[0].id}`}>
                   <Button size="lg" className="rounded-full px-8 h-14 text-lg shadow-xl shadow-primary/20 hover:scale-105 transition-transform">
@@ -112,7 +122,57 @@ export default function VideoDetail() {
                   </Button>
                 </Link>
               )}
+              {video.trailerUrl && (
+                <Dialog>
+                  <DialogTrigger asChild>
+                    <Button size="lg" variant="outline" className="rounded-full px-8 h-14 text-lg border-white/20 bg-white/5 hover:bg-white/10 backdrop-blur-sm">
+                      <Film className="mr-2 h-5 w-5" />
+                      Watch Trailer
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="max-w-4xl p-0 bg-black border-white/10 overflow-hidden">
+                    <div className="aspect-video w-full">
+                      {video.trailerUrl ? (
+                        <iframe
+                          src={video.trailerUrl.includes('youtube.com') || video.trailerUrl.includes('youtu.be') 
+                            ? video.trailerUrl.replace('watch?v=', 'embed/').replace('youtu.be/', 'youtube.com/embed/')
+                            : video.trailerUrl}
+                          className="w-full h-full"
+                          allowFullScreen
+                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                        />
+                      ) : null}
+                    </div>
+                  </DialogContent>
+                </Dialog>
+              )}
             </div>
+
+            {/* Actors Section */}
+            {actors && actors.length > 0 && (
+              <div className="space-y-4 pt-8 border-t border-white/5">
+                <h3 className="text-xl font-bold font-display">Cast / Actors</h3>
+                <ScrollArea className="w-full whitespace-nowrap pb-4">
+                  <div className="flex space-x-6">
+                    {actors.map((actor) => (
+                      <div key={actor.id} className="flex flex-col items-center gap-2 group">
+                        <div className="w-20 h-20 md:w-24 md:h-24 rounded-full overflow-hidden border-2 border-white/5 group-hover:border-primary/50 transition-colors">
+                          <img 
+                            src={actor.avatarUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${actor.name}`} 
+                            alt={actor.name}
+                            className="w-full h-full object-cover transition-transform group-hover:scale-110"
+                          />
+                        </div>
+                        <span className="text-sm font-medium text-center truncate w-24">
+                          {actor.name}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                  <ScrollBar orientation="horizontal" />
+                </ScrollArea>
+              </div>
+            )}
 
             {/* Episodes Grid */}
             <div className="space-y-4 pt-8 border-t border-white/5">

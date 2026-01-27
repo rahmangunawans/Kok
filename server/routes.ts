@@ -296,6 +296,15 @@ export async function registerRoutes(
       const anime = data.data;
       
       if (!anime) return res.status(404).json({ message: "Anime not found" });
+
+      // Fetch characters/cast
+      const charactersResponse = await fetch(`https://api.jikan.moe/v4/anime/${req.params.id}/characters`);
+      const charactersData = await charactersResponse.json();
+      const cast = charactersData.data?.slice(0, 10).map((char: any) => ({
+        name: char.character.name,
+        image: char.character.images?.jpg?.image_url,
+        role: char.role
+      })) || [];
       
       res.json({
         id: anime.mal_id,
@@ -312,6 +321,8 @@ export async function registerRoutes(
         type: anime.type,
         genres: anime.genres?.map((g: any) => g.name) || [],
         studios: anime.studios?.map((s: any) => s.name) || [],
+        trailerUrl: anime.trailer?.embed_url || anime.trailer?.url,
+        cast: cast,
         source: "mal"
       });
     } catch (error) {
