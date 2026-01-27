@@ -597,6 +597,7 @@ export default function AdminPage() {
                                   categoryId: video.categoryId ?? undefined,
                                   isFeatured: video.isFeatured || false,
                                   isVip: video.isVip || false,
+                                  trailerUrl: video.trailerUrl || "",
                                 }); 
                                 setIsVideoDialogOpen(true); 
                               }}
@@ -778,6 +779,17 @@ export default function AdminPage() {
                   </FormItem>
                 )} />
               </div>
+
+              <FormField control={videoForm.control} name="trailerUrl" render={({ field }) => (
+                <FormItem>
+                  <FormLabel>URL Trailer (YouTube Embed/MP4)</FormLabel>
+                  <FormControl>
+                    <Input {...field} value={field.value || ""} data-testid="input-video-trailer" placeholder="https://www.youtube.com/embed/..." />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )} />
+
               <FormField control={videoForm.control} name="categoryId" render={({ field }) => (
                 <FormItem>
                   <FormLabel>Kategori</FormLabel>
